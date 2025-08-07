@@ -1,0 +1,49 @@
+{
+  "name": "giotap-backend-nodejs",
+  "version": "1.0.0",
+  "description": "GIOTAP – Smart School Transportation MVP API for built with Node.js, Express.js, and MongoDB. This project powers the core logic for a smart school mobility system",
+  "main": "dist/app.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "ts-node-dev --respawn --transpile-only app.ts",
+    "dev:watch": "nodemon --exec ts-node app.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Khalid-giotap/giotap-backend-nodejs.git"
+  },
+  "keywords": [
+    "giotap",
+    "SST"
+  ],
+  "author": "Saad",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Khalid-giotap/giotap-backend-nodejs/issues"
+  },
+  "homepage": "https://github.com/Khalid-giotap/giotap-backend-nodejs#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.17.0",
+    "nodemailer": "^7.0.5",
+    "resend": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.2.0",
+    "@types/nodemailer": "^6.4.17",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.2"
+  }
+}

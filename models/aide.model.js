@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const AdminSchema = new mongoose.Schema(
+const AideSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
@@ -15,7 +15,7 @@ const AdminSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],
+      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],      index: true,
     },
     phone: {
       type: String,
@@ -23,34 +23,22 @@ const AdminSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-    role: {
-      type: String,
-      enum: ["super_admin", "transport_admin", "school_admin"],
-    },
     password: {
       type: String,
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters long"],
       select: false, // Exclude password from query results by default
     },
-    transportCompanyId: {
+    busId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "TransportCompany",
-      required: function (this: any) {
-        return this.role === "transport_admin"; // Only required if role is transport_admin
-      },
-    },
-    schoolId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "School",
-      required: function (this: any) {
-        return this.role === "school_admin"; // Only required if role is transport_admin
-      },
+      ref: "Route",
+      required: [true, "Route Id is required"],
+      unique: true,
     },
   },
   { timestamps: true }
 );
 
-const Admin = mongoose.model("Admin", AdminSchema);
+const Aide = mongoose.model("Aide", AideSchema);
 
-export default Admin;
+export default Aide;

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const ParentSchema = new mongoose.Schema(
+const DriverSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
@@ -16,6 +16,7 @@ const ParentSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],
+      index: true,
     },
     phone: {
       type: String,
@@ -29,16 +30,25 @@ const ParentSchema = new mongoose.Schema(
       minlength: [6, "Password must be at least 6 characters long"],
       select: false, // Exclude password from query results by default
     },
-    children: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Student",
-      },
-    ],
+    licenseId: {
+      type: String,
+      required: [true, "License Id is required"],
+      unique: true,
+    },
+    routeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Route",
+      unique: true,
+    },
+    vehicleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Vehicle",
+      unique: true,
+    },
   },
   { timestamps: true }
 );
 
-const Parent = mongoose.model("Parent", ParentSchema);
+const Driver = mongoose.model("Driver", DriverSchema);
 
-export default Parent;
+export default Driver;

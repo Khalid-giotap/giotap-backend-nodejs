@@ -41,6 +41,7 @@ const RouteSchema = new mongoose.Schema(
     schoolId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "School",
+      index: true,
       required: [true, "School Id is required"],
     },
     driverId: {

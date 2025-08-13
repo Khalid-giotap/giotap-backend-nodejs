@@ -29,11 +29,9 @@ const AideSchema = new mongoose.Schema(
       minlength: [6, "Password must be at least 6 characters long"],
       select: false, // Exclude password from query results by default
     },
-    busId: {
+    vehicleId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Route",
-      required: [true, "Route Id is required"],
-      unique: true,
+      ref: "Vehicle",
     },
   },
   { timestamps: true }

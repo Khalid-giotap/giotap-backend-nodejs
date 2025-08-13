@@ -8,17 +8,19 @@ const VehicleSchema = new mongoose.Schema(
       trim: true,
       unique: true,
     },
-    licensePlate: {
+    plateNumber: {
       type: String,
     },
     capacity: {
       type: Number,
       required: [true, "Capacity is required"],
     },
+    filled: {
+      type: Number,
+      default: 0,
+    },
     model: {
       type: String,
-      ref: "Driver",
-      required: [true, "Driver Id is required"],
     },
     GPSid: {
       type: String,
@@ -32,7 +34,6 @@ const VehicleSchema = new mongoose.Schema(
     routeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Route",
-      required: [true, "Route Id is required"],
     },
     status: {
       type: String,
@@ -43,6 +44,21 @@ const VehicleSchema = new mongoose.Schema(
       type: String,
       trim: true,
       maxlength: [300, "Note must be at most 300 characters long"],
+    },
+    currentLocation: {
+      lat: {
+        type: Number,
+        required: [true, "End Location latitude is required"],
+      },
+      lng: {
+        type: Number,
+        required: [true, "End Location longitude is required"],
+      },
+      name: {
+        type: String,
+        required: [true, "End Location name is required"],
+        trim: true,
+      },
     },
   },
   { timestamps: true }

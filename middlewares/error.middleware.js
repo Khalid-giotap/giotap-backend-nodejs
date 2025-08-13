@@ -3,7 +3,7 @@ const errorHandler = (err, req, res, next) => {
     let error = { ...err };
 
     error.message = err.message;
-    
+
     // Mongoose Validation Error
     // if (err.name === "ValidationError") {
     //   const message = Object.values(err.errors || {})
@@ -15,7 +15,7 @@ const errorHandler = (err, req, res, next) => {
 
     // JWT Invalid / Expired
     if (err.name === "JsonWebTokenError") {
-      error = new Error("Invalid token");
+      error = new Error("Invalid token! You can not be authorized!");
       error.statusCode = 401;
     }
 
@@ -26,24 +26,23 @@ const errorHandler = (err, req, res, next) => {
 
     // MongoDB Duplicate Key
     if (err.code === 11000) {
+      console.log(err);
       error = new Error("Duplicate key error");
       error.statusCode = 400;
     }
 
     // Mongoose CastError (Invalid ObjectId)
     if (err.name === "CastError") {
+      console.log(err.stack)
       error = new Error("Resource not found! Invalid Id");
       error.statusCode = 400;
     }
-
-    res
-      .status(error.statusCode || 500)
-      .json({
-        success: false,
-        message: error.message || "Internal Server Error",
-      });
+    console.log(error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
   } catch (error) {
-    console.log("we get here");
     next(error);
   }
 };

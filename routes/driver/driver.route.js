@@ -4,8 +4,9 @@ import {
   deleteDriver,
   getDriver,
   getDrivers,
+  unAssignDriver,
   updateDriver,
-} from "../../../controllers/driver/driver.controller.js";
+} from "../../controllers/driver/driver.controller.js";
 
 const driverRouter = express.Router();
 
@@ -23,5 +24,6 @@ driverRouter.put("/:id", updateDriver);
 
 // Will delete a driver require id
 driverRouter.delete("/:id", deleteDriver);
+driverRouter.delete("/unassign/:id", unAssignDriver);
 
 export default driverRouter;

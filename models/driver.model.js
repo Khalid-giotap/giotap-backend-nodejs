@@ -38,12 +38,16 @@ const DriverSchema = new mongoose.Schema(
     routeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Route",
-      unique: true,
+      default: null,
     },
     vehicleId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Vehicle",
-      unique: true,
+      default: null,
+    },
+    isOnDuty: {
+      type: Boolean,
+      default: true,
     },
   },
   { timestamps: true }

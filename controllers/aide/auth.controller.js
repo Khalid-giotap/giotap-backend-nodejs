@@ -1,53 +1,47 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
-import Driver from "../../models/driver.model.js";
+import Aide from "../../models/aide.model.js";
+import PasswordReset from "../../models/password_reset.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import PasswordReset from "../../models/password_reset.model.js";
 
 export const signIn = catchAsyncErrors(async (req, res) => {
   const { email, password } = req.body;
+  const aide = await Aide.findOne({ email }).select("+password");
 
-  const driver = await Driver.findOne({ email }).select("+password");
-  if (!driver) {
-    throw Error("Invalid credentials!", 400);
-  }
-  const isPasswordMatch = await bcrypt.compare(password, driver.password);
+  if (!aide) throw Error("Invalid credentials!");
 
-  if (!isPasswordMatch) {
-    throw Error("Invalid credentials!", 400);
-  }
+  const isPasswordMatch = await bcrypt.compare(password, aide.password);
 
-  const token = jwt.sign({ userId: driver._id }, process.env.JWT_SECRET, {
+  if (!isPasswordMatch) throw Error("Invalid credentials!");
+
+  const token = jwt.sign({ userId: aide._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || "7d",
   });
   res
     .cookie("token", token, {
       httpOnly: true,
-      path: "/",
       secure: true,
       sameSite: "strict",
+      path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
-    }) // 7 days
-    .status(201)
+    })
     .json({
       success: true,
-      data: {
-        token,
-        user: driver,
-      },
-      message: "Sign in Successful!",
+      data: { aide },
+      message: "Sign in successful!",
     });
 });
+export const aboutMe = catchAsyncErrors(async (req, res) => {
+  if (!req.user) throw Error("User not found, login again!");
 
-export const aboutMe = catchAsyncErrors(async (req, res, next) => {
-  return res.status(200).json({
+  res.json({
     success: true,
-    data: req.user,
-    message: "User details fetched successfully!",
+    data: { user: req.user },
+    message: "User found successfully!",
   });
 });
 
-export const signOut = catchAsyncErrors(async (req, res, next) => {
+export const signOut = catchAsyncErrors(async (req, res) => {
   res
     .clearCookie("token", {
       httpOnly: true, // same as when cookie was set
@@ -57,7 +51,8 @@ export const signOut = catchAsyncErrors(async (req, res, next) => {
     .status(200)
     .json({
       success: true,
-      message: "Sign out Successful!",
+      data: { user: null },
+      message: "Sign out successful!",
     });
 });
 
@@ -67,7 +62,7 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
 
   if (!newPassword) throw Error("New password is required!");
 
-  const user = await Driver.findById(req.user._id).select("+password");
+  const user = await Aide.findById(req.user._id).select("+password");
   if (!user) {
     throw Error("Some error Occurred! please try again!", 404);
   }
@@ -90,7 +85,6 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
       message: "Password changed, you are signed out!",
     });
 });
-
 export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
   const { email } = req.body;
 
@@ -113,7 +107,6 @@ export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
 
   res.json({ success: true, message: "Reset link sent to email" });
 });
-
 export const resetPassword = catchAsyncErrors(async (req, res, next) => {
   const { token, newPassword } = req.body;
 
@@ -129,7 +122,7 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(newPassword, salt);
   // Update user password here...
-  await Driver.updateOne(
+  await Aide.updateOne(
     { email: resetRecord.email },
     { password: hashedPassword }
   );

@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const RouteSchema = new mongoose.Schema(
   {
-    routeName: {
+    name: {
       type: String,
       required: [true, "Route Name is required"],
       trim: true,
@@ -42,7 +42,6 @@ const RouteSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "School",
       index: true,
-      required: [true, "School Id is required"],
     },
     driverId: {
       type: mongoose.Schema.Types.ObjectId,

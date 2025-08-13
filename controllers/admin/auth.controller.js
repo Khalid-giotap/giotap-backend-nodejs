@@ -57,7 +57,7 @@ export const signIn = catchAsyncErrors(async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
-      path: "/",
+
       maxAge: 7 * 24 * 60 * 60 * 1000,
     }) // 7 days
     .status(200)
@@ -67,7 +67,7 @@ export const signIn = catchAsyncErrors(async (req, res) => {
         token,
         user: userExist,
       },
-      message: "Sign in Successful!",
+      message: "Signed in successfully!",
     });
 });
 
@@ -89,7 +89,8 @@ export const signOut = catchAsyncErrors(async (req, res) => {
     .status(200)
     .json({
       success: true,
-      message: "Sign out Successful!",
+      data: { user: null },
+      message: "Signed out Successfully!",
     });
 });
 
@@ -105,7 +106,8 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
   }
 
   const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
-  if (!isPasswordMatch) throw Error("Old password is wrong!", 400);
+  if (!isPasswordMatch)
+    throw Error("Old Password is incorrect, Try again!", 400);
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(newPassword, salt);
@@ -122,6 +124,7 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
       message: "Password changed, you are signed out!",
     });
 });
+
 export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
   const { email } = req.body;
 
@@ -143,6 +146,7 @@ export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
 
   res.json({ success: true, message: "Reset link sent to email" });
 });
+
 export const resetPassword = catchAsyncErrors(async (req, res, next) => {
   const { token, newPassword } = req.body;
 
@@ -167,5 +171,5 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
   resetRecord.used = true;
   await resetRecord.save();
 
-  res.json({ message: "Password reset successful" });
+  res.json({ message: "Password reset successful, please sign in!" });
 });

@@ -37,6 +37,7 @@ const AideSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+AideSchema.index({ email: 1, phone: 1 }, { unique: true });
 const Aide = mongoose.model("Aide", AideSchema);
 
 export default Aide;

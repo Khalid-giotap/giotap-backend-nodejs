@@ -2,14 +2,11 @@ import mongoose from "mongoose";
 
 const VehicleSchema = new mongoose.Schema(
   {
-    vehicleNumber: {
+    plateNumber: {
       type: String,
       required: [true, "Vehicle Number is required"],
       trim: true,
       unique: true,
-    },
-    plateNumber: {
-      type: String,
     },
     capacity: {
       type: Number,
@@ -64,6 +61,7 @@ const VehicleSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+VehicleSchema.index({ plateNumber: 1 }, { unique: true });
 const Vehicle = mongoose.model("Vehicle", VehicleSchema);
 
 export default Vehicle;

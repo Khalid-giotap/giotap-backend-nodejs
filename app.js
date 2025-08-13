@@ -16,6 +16,10 @@ import routeRoutes from "./routes/route/route.js";
 import vehicleRoutes from "./routes/vehicle/vehicle.route.js";
 import aideAuthRoutes from "./routes/aide/auth.route.js";
 import aideRoutes from "./routes/aide/aide.route.js";
+import siteManagerRoutes from "./routes/site-manager/manager.route.js";
+import managerAuthRoutes from "./routes/site-manager/auth.route.js";
+import mechanicRoutes from "./routes/mechanic/mechanic.route.js";
+import mechanicAuthRoutes from "./routes/mechanic/auth.route.js";
 
 const app = express();
 const _PORT = process.env.PORT || 5000;
@@ -37,19 +41,29 @@ app.use(
     credentials: true,
   })
 );
+
+
 //* Apis
 
 // Drivers
 app.use("/api/v1/admin/driver", driverRoutes);
 app.use("/api/v1/driver/auth", driverAuthRoutes);
 
-// Aide Routes
+// Aide 
 app.use("/api/v1/admin/aide", aideRoutes);
 app.use("/api/v1/aide/auth", aideAuthRoutes);
 
-// Vehicle Routes
+// Vehicle & Routes
 app.use("/api/v1/admin/route", routeRoutes);
 app.use("/api/v1/admin/vehicle", vehicleRoutes);
+
+// Site Manager 
+app.use("/api/v1/admin/site-manager", siteManagerRoutes);
+app.use("/api/v1/site-manager/auth", managerAuthRoutes);
+
+// Site Manager 
+app.use("/api/v1/admin/mechanic", mechanicRoutes);
+app.use("/api/v1/mechanic/auth", mechanicAuthRoutes);
 
 // Admin
 app.use("/api/v1/admin/auth", adminAuthRoutes);

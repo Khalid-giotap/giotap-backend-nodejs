@@ -6,7 +6,7 @@ import Route from "../../models/route.model.js";
 
 export const createDriver = catchAsyncErrors(async (req, res) => {
   const { email, phone, password } = req.body;
-  console.log("req.body", req.body);
+  
   const existingDriver = await Driver.findOne({ $or: [{ email }, { phone }] });
   if (existingDriver) {
     throw Error("Driver already exist with same phone or email", 400);
@@ -27,7 +27,7 @@ export const createDriver = catchAsyncErrors(async (req, res) => {
     data: {
       driver,
     },
-    message: "Driver created successfully!",
+    message: "Driver account created successfully!",
   });
 });
 
@@ -50,8 +50,6 @@ export const getDriver = catchAsyncErrors(async (req, res, next) => {
 export const updateDriver = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
   const { vehicleId, routeId } = req.body;
-  // console.log(id, req.body);
-  console.log(vehicleId, routeId);
 
   if (vehicleId) {
     if (routeId) {

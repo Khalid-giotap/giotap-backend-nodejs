@@ -25,11 +25,10 @@ export const createAdmin = catchAsyncErrors(async (req, res) => {
     data: {
       admin: newAdmin,
     },
-    message: "Admin created successfully!",
+    message: "Admin account created successfully!",
   });
 });
 
-// Singles /:id
 export const getAdmin = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
   console.log("we are at getAdmin", id);
@@ -83,7 +82,6 @@ export const updateAdmin = catchAsyncErrors(async (req, res) => {
   });
 });
 
-// Multiples
 export const deleteAdmins = catchAsyncErrors(async (req, res) => {
   const admins = await Admin.deleteMany();
   if (!admins) throw Error("Admins not found!", 404);

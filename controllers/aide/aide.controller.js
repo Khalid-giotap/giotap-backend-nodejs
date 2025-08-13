@@ -24,11 +24,10 @@ export const createAide = catchAsyncErrors(async (req, res) => {
   res.json({
     success: true,
     data: { aide },
-    message: "Aide created successfully!",
+    message: "Aide account created successfully!",
   });
 });
 
-// Singles /:id
 export const getAide = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
   console.log(id);
@@ -71,7 +70,6 @@ export const deleteAide = catchAsyncErrors(async (req, res) => {
   });
 });
 
-// Multiples
 export const getAides = catchAsyncErrors(async (req, res) => {
   const aides = await Aide.find();
   if (!aides) throw Error("Aides not found!", 404);

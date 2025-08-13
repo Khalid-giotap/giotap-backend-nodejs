@@ -11,11 +11,13 @@ import { isAideAuthenticated } from "../../middlewares/auth.middleware.js";
 
 const authRouter = express.Router();
 
+// Auth
 authRouter.post("/sign-in", signIn);
 authRouter.get("/me", isAideAuthenticated, aboutMe);
 authRouter.delete("/sign-out", signOut);
-authRouter.put("/change-password", isAideAuthenticated, changePassword);
 
+// Password
+authRouter.put("/change-password", isAideAuthenticated, changePassword);
 authRouter.post("/forgot-password", requestPasswordReset);
 authRouter.put("/reset-password", resetPassword);
 

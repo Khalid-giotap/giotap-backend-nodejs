@@ -3,6 +3,15 @@ import Route from "../../models/route.model.js";
 import Vehicle from "../../models/vehicle.model.js";
 
 export const createRoute = catchAsyncErrors(async (req, res) => {
+  const { name, startPoint, endPoint } = req.body;
+
+  if (!name || !startPoint || !endPoint) {
+    throw Error("All fields are required!", 400);
+  }
+
+  const existingRoute = await Route.findOne({ name });
+  if (existingRoute) throw Error("Route already exist with same name!");
+
   const route = await Route.create(req.body);
   if (!route) {
     throw Error("Error creating Route!", 400);
@@ -33,18 +42,18 @@ export const getRoute = catchAsyncErrors(async (req, res) => {
 });
 
 export const updateRoute = catchAsyncErrors(async (req, res) => {
-  const {id} = req.params; // from /:routeId
+  const { id } = req.params; // from /:routeId
   const { vehicle, driver } = req.query; // from ?vehicle=...&driver=...
   if (vehicle && driver) {
     const updatedVehicle = await Vehicle.findByIdAndUpdate(
       vehicle,
       {
-        routeId,
+        id,
       },
       { new: true }
     );
     const updatedRoute = await Route.findByIdAndUpdate(
-      routeId,
+      id,
       {
         driverId: driver,
         vehicleId: vehicle,
@@ -53,8 +62,6 @@ export const updateRoute = catchAsyncErrors(async (req, res) => {
         new: true,
       }
     );
-
-    console.log(updatedRoute);
 
     return res.status(200).json({
       data: {
@@ -66,13 +73,11 @@ export const updateRoute = catchAsyncErrors(async (req, res) => {
     });
   }
   if (id) {
-    console.log(req.body)
     const route = await Route.findByIdAndUpdate(
       id,
       { ...req.body },
       { new: true }
     );
-    console.log(route);
     const routes = await Route.find();
     return res.status(200).json({
       data: {

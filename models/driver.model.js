@@ -49,10 +49,15 @@ const DriverSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    experience: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
 
+DriverSchema.index({ email: 1, phone: 1 }, { unique: true });
 const Driver = mongoose.model("Driver", DriverSchema);
 
 export default Driver;

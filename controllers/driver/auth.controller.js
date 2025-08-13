@@ -2,7 +2,7 @@ import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
 import Driver from "../../models/driver.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import PasswordReset from "../../models/password_reset.model.js";
+import PasswordReset from "../../models/password-reset.model.js";
 
 export const signIn = catchAsyncErrors(async (req, res) => {
   const { email, password } = req.body;
@@ -23,7 +23,6 @@ export const signIn = catchAsyncErrors(async (req, res) => {
   res
     .cookie("token", token, {
       httpOnly: true,
-      path: "/",
       secure: true,
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -35,7 +34,7 @@ export const signIn = catchAsyncErrors(async (req, res) => {
         token,
         user: driver,
       },
-      message: "Sign in Successful!",
+      message: "Signed in successfully!",
     });
 });
 
@@ -49,7 +48,7 @@ export const aboutMe = catchAsyncErrors(async (req, res, next) => {
 
 export const signOut = catchAsyncErrors(async (req, res, next) => {
   res
-    .clearCookie("token", {
+  .clearCookie("token", {
       httpOnly: true, // same as when cookie was set
       secure: true, // same as when cookie was set
       sameSite: "strict", // same as when cookie was set
@@ -57,7 +56,8 @@ export const signOut = catchAsyncErrors(async (req, res, next) => {
     .status(200)
     .json({
       success: true,
-      message: "Sign out Successful!",
+      data: { user: null },
+      message: "Signed out successfully!",
     });
 });
 
@@ -73,7 +73,7 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
   }
 
   const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
-  if (!isPasswordMatch) throw Error("Old password is wrong!", 400);
+  if (!isPasswordMatch) throw Error("Old Password is incorrect, Try again!", 400);
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(newPassword, salt);
@@ -86,7 +86,7 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
     .status(200)
     .json({
       success: true,
-      data: { user },
+      data: { user: null },
       message: "Password changed, you are signed out!",
     });
 });
@@ -116,14 +116,16 @@ export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
 
 export const resetPassword = catchAsyncErrors(async (req, res, next) => {
   const { token, newPassword } = req.body;
+  if (!newPassword) throw Error("New password is required!");
+  if (!token) throw Error("Token is required!");
 
   const resetRecord = await PasswordReset.findOne({ token, used: false });
   if (!resetRecord) {
-    return res.status(400).json({ message: "Invalid or expired token" });
+    throw Error("Invalid or expired token");
   }
 
   if (resetRecord.expiresAt < new Date()) {
-    return res.status(400).json({ message: "Token expired" });
+    throw Error("Token expired");
   }
 
   const salt = await bcrypt.genSalt(10);
@@ -138,5 +140,5 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
   resetRecord.used = true;
   await resetRecord.save();
 
-  res.json({ message: "Password reset successful" });
+  res.json({ message: "Password reset successful, please sign in!" });
 });

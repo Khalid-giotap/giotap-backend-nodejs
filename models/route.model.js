@@ -82,6 +82,7 @@ const RouteSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+RouteSchema.index({ name: 1 }, { unique: true });
 const Route = mongoose.model("Route", RouteSchema);
 
 export default Route;

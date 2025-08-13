@@ -1,54 +1,48 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
-import Aide from "../../models/aide.model.js";
-import PasswordReset from "../../models/password-reset.model.js";
 import bcrypt from "bcryptjs";
+import SiteManager from "../../models/site-manger.model.js";
 import jwt from "jsonwebtoken";
+import PasswordReset from "../../models/password-reset.model.js";
 
 export const signIn = catchAsyncErrors(async (req, res) => {
+  console.log(req.body);
   const { email, password } = req.body;
-  const aide = await Aide.findOne({ email }).select("+password");
 
-  if (!aide) throw Error("Invalid credentials!");
+  if (!email || !password) throw Error("Email and password are required", 400);
 
-  const isPasswordMatch = await bcrypt.compare(password, aide.password);
+  const user = await SiteManager.findOne({ email }).select("+password");
+  if (!user) throw Error("Invalid credentials, Try again!", 400);
 
-  if (!isPasswordMatch) throw Error("Invalid credentials!");
+  const isPasswordMatch = await bcrypt.compare(password, user.password);
 
-  const token = jwt.sign({ userId: aide._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  if (!isPasswordMatch) throw Error("Invalid credentials, Try again!", 400);
+
+  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+    expiresIn: "1d",
   });
+
   res
     .cookie("token", token, {
       httpOnly: true,
-      secure: true,
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      secure: true,
+      path: "/",
+      maxAge: 24 * 60 * 60 * 1000,
     })
     .json({
       success: true,
-      data: { token, aide },
+      data: { token, user },
       message: "Signed in successfully!",
     });
-});
-
-export const aboutMe = catchAsyncErrors(async (req, res) => {
-  if (!req.user) throw Error("User not found, login again!");
-
-  res.json({
-    success: true,
-    data: { user: req.user },
-    message: "User found successfully!",
-  });
 });
 
 export const signOut = catchAsyncErrors(async (req, res) => {
   res
     .clearCookie("token", {
-      httpOnly: true, // same as when cookie was set
-      secure: true, // same as when cookie was set
-      sameSite: "strict", // same as when cookie was set
+      httpOnly: true,
+      sameSite: "strict",
+      secure: true,
     })
-    .status(200)
     .json({
       success: true,
       data: { user: null },
@@ -56,17 +50,28 @@ export const signOut = catchAsyncErrors(async (req, res) => {
     });
 });
 
+export const aboutMe = catchAsyncErrors(async (req, res) => {
+  if (!req.user) throw Error("You are not Authorized!", 400);
+
+  const user = await SiteManager.findById(req.user._id);
+  console.log(user);
+  res.json({
+    success: true,
+    data: { user },
+    message: "Authentication successful!",
+  });
+});
+
 export const changePassword = catchAsyncErrors(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  if (!oldPassword) throw Error("Old password is required!");
 
+  if (!oldPassword) throw Error("Old password is required!");
   if (!newPassword) throw Error("New password is required!");
 
-  if (!req.user) {
-    throw Error("You are not authorized!", 400);
-  }
+  if (!req.user) throw Error("You are not authorized!");
 
-  const user = await Aide.findById(req.user._id).select("+password");
+  const user = await SiteManager.findById(req.user._id).select("+password");
+
   if (!user)
     res
       .clearCookie("token", {
@@ -81,12 +86,12 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
       });
 
   const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
+
   if (!isPasswordMatch)
     throw Error("Old Password is incorrect, Try again!", 400);
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(newPassword, salt);
-
   user.password = hashedPassword;
   await user.save();
 
@@ -96,7 +101,6 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
       secure: true,
       sameSite: "strict",
     })
-    .status(200)
     .json({
       success: true,
       data: { user: null },
@@ -106,14 +110,11 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
 
 export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
   const { email } = req.body;
-
-  // Token generate
+  if (!email) throw Error("Email is required");
   const token = jwt.sign({ email }, process.env.JWT_SECRET, {
     expiresIn: "10m",
   });
   const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minute
-
-  // Save in DB
   await PasswordReset.create({
     email,
     token,
@@ -121,35 +122,41 @@ export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
   });
 
   console.log(`http://localhost:4000/auth/forgot-password?token=${token}`);
-  // todo Send email to user
-  // sendEmail(email, `https://yourapp.com/reset-password?token=${token}`)
 
-  res.json({ success: true, message: "Reset link sent to email" });
+  //todo   Send url to email
+  res.json({
+    success: true,
+    message: "Reset email sent successfully!",
+  });
 });
 
-export const resetPassword = catchAsyncErrors(async (req, res, next) => {
+export const resetPassword = catchAsyncErrors(async (req, res) => {
   const { token, newPassword } = req.body;
 
+  if (!newPassword) throw Error("New Password is required!");
+  if (!token) throw Error("Token is required!");
+
   const resetRecord = await PasswordReset.findOne({ token, used: false });
-  if (!resetRecord) {
-    return res.status(400).json({ message: "Invalid or expired token" });
-  }
+
+  if (!resetRecord) throw Error("Invalid or expired token");
+
+  const user = await SiteManager.findOne({ email: resetRecord.email });
+  if (!user) throw Error("User not found");
 
   if (resetRecord.expiresAt < new Date()) {
-    return res.status(400).json({ message: "Token expired" });
+    throw Error("Token expired");
   }
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(newPassword, salt);
-  // Update user password here...
-  await Aide.updateOne(
-    { email: resetRecord.email },
-    { password: hashedPassword }
-  );
+  user.password = hashedPassword;
+  await user.save();
 
-  // Mark token as used
   resetRecord.used = true;
   await resetRecord.save();
 
-  res.json({ message: "Password reset successful, please sign in!" });
+  res.json({
+    success: true,
+    message: "Password reset successful, please sign in!",
+  });
 });

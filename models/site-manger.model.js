@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 const SiteManagerSchema = new mongoose.Schema(
   {
@@ -42,6 +44,26 @@ const SiteManagerSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+
+SiteManagerSchema.methods.getSignedToken = function () {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+};
+
+SiteManagerSchema.methods.comparePassword = async function (password) {
+  return await bcrypt.compare(password, this.password);
+};
+
+SiteManagerSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
 
 SiteManagerSchema.index({ email: 1, phone: 1 }, { unique: true });
 const SiteManager = mongoose.model("SiteManager", SiteManagerSchema);

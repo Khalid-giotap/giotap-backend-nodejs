@@ -7,11 +7,13 @@ import {
   updateAdmin,
   getAdmin,
   getAdmins,
+  createAdmins,
 } from "../../controllers/admin/admin.controller.js";
 
 const authRouter = express.Router();
 
 authRouter.post("/", createAdmin);
+authRouter.post("/bulk", createAdmins);
 
 // Singles require /:id
 authRouter.get("/:id", getAdmin);

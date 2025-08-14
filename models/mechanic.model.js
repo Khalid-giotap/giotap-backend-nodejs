@@ -35,20 +35,20 @@ const MechanicSchema = new mongoose.Schema(
     assignedVehicle: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Vehicle",
+      default: null,
     },
   },
   { timestamps: true }
 );
 
 MechanicSchema.methods.getSignedToken = function () {
-  console.log(this);
+  
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE,
+    expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
 
 MechanicSchema.methods.comparePassword = async function (password) {
-  console.log(password, this.password);
   return await bcrypt.compare(password, this.password);
 };
 
@@ -58,7 +58,7 @@ MechanicSchema.pre("save", async function (next) {
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  console.log(this.password)
+  console.log(this.password,'this.password in pre save')
   next();
 });
 

@@ -31,6 +31,7 @@ const VehicleSchema = new mongoose.Schema(
     routeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Route",
+      default: null,
     },
     status: {
       type: String,

@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 const AideSchema = new mongoose.Schema(
   {
@@ -15,7 +17,8 @@ const AideSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],      index: true,
+      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],
+      index: true,
     },
     phone: {
       type: String,
@@ -36,6 +39,25 @@ const AideSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+AideSchema.methods.getSignedToken = function () {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+};
+
+AideSchema.methods.comparePassword = async function (password) {
+  return await bcrypt.compare(password, this.password);
+};
+
+AideSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
 
 AideSchema.index({ email: 1, phone: 1 }, { unique: true });
 const Aide = mongoose.model("Aide", AideSchema);

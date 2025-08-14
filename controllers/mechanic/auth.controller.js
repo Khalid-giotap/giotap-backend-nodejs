@@ -14,18 +14,14 @@ export const signIn = catchAsyncErrors(async (req, res) => {
   if (!user) {
     throw Error("Invalid credentials");
   }
-  console.log(user);
-  
-  const isPasswordMatch = await bcrypt.compare(password, user.password);
-  // const isPasswordMatch = await user.comparePassword(password);
-  console.log(isPasswordMatch);
+
+  const isPasswordMatch = await user.comparePassword(password);
 
   if (!isPasswordMatch) {
     throw Error("Invalid credentials");
   }
 
   const token = user.getSignedToken();
-  console.log(token);
 
   res
     .cookie("token", token, {
@@ -77,7 +73,7 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
 
   if (!req.user) throw Error("You are not authorized!");
 
-  const user = await Mechanic.findById(req.user._id).select("+password");
+  const user = await Mechanic.findById(req.user.id).select("+password");
 
   if (!user)
     res
@@ -92,14 +88,12 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
         message: "You're not authorized, You have been signed out!",
       });
 
-  const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
+  const isPasswordMatch = await user.comparePassword(oldPassword);
 
   if (!isPasswordMatch)
     throw Error("Old Password is incorrect, Try again!", 400);
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(newPassword, salt);
-  user.password = hashedPassword;
+  user.password = newPassword;
   await user.save();
 
   res
@@ -157,10 +151,7 @@ export const resetPassword = catchAsyncErrors(async (req, res) => {
     throw Error("Token expired");
   }
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-  user.password = hashedPassword;
+  user.password = newPassword;
   await user.save();
 
   resetRecord.used = true;

@@ -23,35 +23,50 @@ const SchoolSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-    address: {
-      address_line1: {
+    location: {
+      lng: {
         type: String,
+        required: [true, "Longitude is required"],
         trim: true,
       },
-      state: {
+      lat: {
         type: String,
+        required: [true, "Latitude is required"],
         trim: true,
       },
-      postal_code: {
-        type: Number,
-      },
-      landmark: {
+      name: {
         type: String,
         trim: true,
-        lowercase: true,
       },
     },
     logo: {
       type: String,
     },
+    description: {
+      type: String,
+      trim: true,
+      maxlength: [500, "Description must be at most 500 characters long"],
+      default: "No description provided",
+    },
     routeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Route",
+      default: null,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+      required: true,
     },
   },
   { timestamps: true }
 );
 
+SchoolSchema.index({ email: 1, phone: 1, name: 1 });
 const School = mongoose.model("School", SchoolSchema);
 
 export default School;

@@ -25,6 +25,36 @@ export const createRoute = catchAsyncErrors(async (req, res) => {
   });
 });
 
+
+export const createRoutes = catchAsyncErrors(async (req, res) => {
+  const { routes } = req.body;
+
+  if (!Array.isArray(routes) || routes.length === 0) {
+    throw Error("Please provide an array of routes");
+  }
+
+  // Add createdBy automatically if needed
+
+  const createdRoutes = await Route.insertMany(routes, {
+    ordered: false,
+  });
+
+  if (!createdRoutes)
+    throw Error("Some error occurred creating routes, Try again!");
+
+  const totalCount = await Route.countDocuments();
+
+  res.status(201).json({
+    success: true,
+    data: {
+      routes: createdRoutes,
+      totalCount,
+      totalPages: Math.ceil(totalCount / 10),
+    },
+    message: "Routes created successfully",
+  });
+});
+
 export const getRoute = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
 

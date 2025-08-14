@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 const DriverSchema = new mongoose.Schema(
   {
@@ -56,6 +58,28 @@ const DriverSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+
+DriverSchema.methods.getSignedToken = function () {
+  
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+};
+
+DriverSchema.methods.comparePassword = async function (password) {
+  return await bcrypt.compare(password, this.password);
+};
+
+DriverSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
 
 DriverSchema.index({ email: 1, phone: 1 }, { unique: true });
 const Driver = mongoose.model("Driver", DriverSchema);

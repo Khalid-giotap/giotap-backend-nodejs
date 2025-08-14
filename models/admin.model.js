@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 const AdminSchema = new mongoose.Schema(
   {
@@ -38,14 +40,35 @@ const AdminSchema = new mongoose.Schema(
     transportCompanyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "TransportCompany",
+      default: null,
     },
     schoolId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "School",
+      default: null,
     },
   },
   { timestamps: true }
 );
+
+AdminSchema.methods.getSignedToken = function () {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+};
+
+AdminSchema.methods.comparePassword = async function (password) {
+  return await bcrypt.compare(password, this.password);
+};
+
+AdminSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
 
 AdminSchema.index({ email: 1, phone: 1 }, { unique: true });
 const Admin = mongoose.model("Admin", AdminSchema);

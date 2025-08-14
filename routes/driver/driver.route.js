@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createDriver,
+  createDrivers,
   deleteDriver,
   getDriver,
   getDrivers,
@@ -12,6 +13,7 @@ const driverRouter = express.Router();
 
 // Will create a driver with body
 driverRouter.post("/", createDriver);
+driverRouter.post("/bulk", createDrivers);
 
 // returns the list of drivers
 driverRouter.get("/", getDrivers);

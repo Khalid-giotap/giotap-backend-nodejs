@@ -5,13 +5,13 @@ const errorHandler = (err, req, res, next) => {
     error.message = err.message;
 
     // Mongoose Validation Error
-    // if (err.name === "ValidationError") {
-    //   const message = Object.values(err.errors || {})
-    //     .map((val) => val.message)
-    //     .join(", ");
-    //   error = new Error(message);
-    //   error.statusCode = 400;
-    // }
+    if (err.name === "ValidationError") {
+      const message = Object.values(err.errors || {})
+        .map((val) => val.message)
+        .join(", ");
+      error = new Error(message);
+      error.statusCode = 400;
+    }
 
     // JWT Invalid / Expired
     if (err.name === "JsonWebTokenError") {

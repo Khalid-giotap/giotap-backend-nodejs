@@ -1,9 +1,18 @@
 import express from "express";
-import { createMechanic, deleteMechanic, deleteMechanics, getMechanic, getMechanics, updateMechanic } from "../../controllers/mechanic/mechanic.controller.js";
+import {
+  createMechanic,
+  createMechanics,
+  deleteMechanic,
+  deleteMechanics,
+  getMechanic,
+  getMechanics,
+  updateMechanic,
+} from "../../controllers/mechanic/mechanic.controller.js";
 
 const mechanicRouter = express.Router();
 
 mechanicRouter.post("/", createMechanic);
+mechanicRouter.post("/bulk", createMechanics);
 mechanicRouter.get("/:id", getMechanic);
 mechanicRouter.put("/:id", updateMechanic);
 mechanicRouter.delete("/:id", deleteMechanic);

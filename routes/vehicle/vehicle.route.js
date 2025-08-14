@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createVehicle,
+  createVehicles,
   deleteVehicle,
   deleteVehicles,
   getVehicle,
@@ -11,6 +12,7 @@ import {
 const vehicleRouter = express.Router();
 
 vehicleRouter.post("/", createVehicle);
+vehicleRouter.post("/bulk", createVehicles);
 vehicleRouter.get("/", getVehicles);
 vehicleRouter.get("/:id", getVehicle);
 vehicleRouter.delete("/:id", deleteVehicle);

@@ -1,25 +1,22 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
 import Driver from "../../models/driver.model.js";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+
 import PasswordReset from "../../models/password-reset.model.js";
 
 export const signIn = catchAsyncErrors(async (req, res) => {
   const { email, password } = req.body;
 
-  const driver = await Driver.findOne({ email }).select("+password");
-  if (!driver) {
+  const user = await Driver.findOne({ email }).select("+password");
+  if (!user) {
     throw Error("Invalid credentials!", 400);
   }
-  const isPasswordMatch = await bcrypt.compare(password, driver.password);
+  const isPasswordMatch = await user.comparePassword(password);
 
   if (!isPasswordMatch) {
     throw Error("Invalid credentials!", 400);
   }
 
-  const token = jwt.sign({ userId: driver._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
-  });
+  const token = user.getSignedToken();
   res
     .cookie("token", token, {
       httpOnly: true,
@@ -32,7 +29,7 @@ export const signIn = catchAsyncErrors(async (req, res) => {
       success: true,
       data: {
         token,
-        user: driver,
+        user,
       },
       message: "Signed in successfully!",
     });
@@ -41,14 +38,14 @@ export const signIn = catchAsyncErrors(async (req, res) => {
 export const aboutMe = catchAsyncErrors(async (req, res, next) => {
   return res.status(200).json({
     success: true,
-    data: req.user,
+    data: { user: req.user },
     message: "User details fetched successfully!",
   });
 });
 
 export const signOut = catchAsyncErrors(async (req, res, next) => {
   res
-  .clearCookie("token", {
+    .clearCookie("token", {
       httpOnly: true, // same as when cookie was set
       secure: true, // same as when cookie was set
       sameSite: "strict", // same as when cookie was set
@@ -67,18 +64,17 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
 
   if (!newPassword) throw Error("New password is required!");
 
-  const user = await Driver.findById(req.user._id).select("+password");
+  const user = await Driver.findById(req.user.id).select("+password");
   if (!user) {
     throw Error("Some error Occurred! please try again!", 404);
   }
 
-  const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
-  if (!isPasswordMatch) throw Error("Old Password is incorrect, Try again!", 400);
+  const isPasswordMatch = await user.comparePassword(oldPassword);
+  if (!isPasswordMatch)
+    throw Error("Old Password is incorrect, Try again!", 400);
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-  user.password = hashedPassword;
+  // password will be hashed in pre save method
+  user.password = newPassword;
   await user.save();
 
   res
@@ -128,12 +124,10 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
     throw Error("Token expired");
   }
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(newPassword, salt);
   // Update user password here...
   await Driver.updateOne(
     { email: resetRecord.email },
-    { password: hashedPassword }
+    { password: newPassword }
   );
 
   // Mark token as used

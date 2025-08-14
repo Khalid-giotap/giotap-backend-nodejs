@@ -20,6 +20,8 @@ import siteManagerRoutes from "./routes/site-manager/manager.route.js";
 import managerAuthRoutes from "./routes/site-manager/auth.route.js";
 import mechanicRoutes from "./routes/mechanic/mechanic.route.js";
 import mechanicAuthRoutes from "./routes/mechanic/auth.route.js";
+import companyRoutes from "./routes/transport-company/company.route.js";
+import schoolRoutes from "./routes/school/school.route.js";
 
 const app = express();
 const _PORT = process.env.PORT || 5000;
@@ -37,11 +39,10 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 app.use(
   cors({
-    origin: ["http://localhost:3050","http://localhost:3000"],
+    origin: ["http://localhost:3050", "http://localhost:3000"],
     credentials: true,
   })
 );
-
 
 //* Apis
 
@@ -49,7 +50,7 @@ app.use(
 app.use("/api/v1/admin/driver", driverRoutes);
 app.use("/api/v1/driver/auth", driverAuthRoutes);
 
-// Aide 
+// Aide
 app.use("/api/v1/admin/aide", aideRoutes);
 app.use("/api/v1/aide/auth", aideAuthRoutes);
 
@@ -57,19 +58,23 @@ app.use("/api/v1/aide/auth", aideAuthRoutes);
 app.use("/api/v1/admin/route", routeRoutes);
 app.use("/api/v1/admin/vehicle", vehicleRoutes);
 
-// Site Manager 
+// Site Manager
 app.use("/api/v1/admin/site-manager", siteManagerRoutes);
 app.use("/api/v1/site-manager/auth", managerAuthRoutes);
 
-// Site Manager 
+// Site Manager
 app.use("/api/v1/admin/mechanic", mechanicRoutes);
 app.use("/api/v1/mechanic/auth", mechanicAuthRoutes);
+
+// Transport Company
+app.use("/api/v1/admin/company", companyRoutes);
+
+// Transport Company
+app.use("/api/v1/admin/school", schoolRoutes);
 
 // Admin
 app.use("/api/v1/admin/auth", adminAuthRoutes);
 app.use("/api/v1/admin", adminRoutes);
-
-
 
 app.use(errorHandler);
 

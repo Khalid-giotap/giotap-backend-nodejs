@@ -5,12 +5,14 @@ import {
   getRoute,
   getRoutes,
   updateRoute,
-  deleteRoutes
+  deleteRoutes,
+  createRoutes
 } from "../../controllers/route/route.controller.js";
 
 const routeRouter = express.Router();
 
 routeRouter.post("/", createRoute);
+routeRouter.post("/bulk", createRoutes);
 
 routeRouter.get("/", getRoutes);
 routeRouter.get("/:id", getRoute);

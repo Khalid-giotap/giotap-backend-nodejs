@@ -43,6 +43,22 @@ const transportCompanySchema = new mongoose.Schema(
     logo: {
       type: String,
     },
+    status: {
+      type: String,
+      enum: ["active", "suspended", "inactive"],
+      default: "active",
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+      required: true,
+    },
+    schools: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "School", required: false },
+    ], // Virtual populate
+    vehicles: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "Vehicle", required: false },
+    ], // Virtual populate
   },
   { timestamps: true }
 );

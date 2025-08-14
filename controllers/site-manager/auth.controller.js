@@ -5,33 +5,29 @@ import jwt from "jsonwebtoken";
 import PasswordReset from "../../models/password-reset.model.js";
 
 export const signIn = catchAsyncErrors(async (req, res) => {
-  console.log(req.body);
   const { email, password } = req.body;
 
   if (!email || !password) throw Error("Email and password are required", 400);
 
-  const user = await SiteManager.findOne({ email }).select("+password");
+  let user = await SiteManager.findOne({ email }).select("+password");
   if (!user) throw Error("Invalid credentials, Try again!", 400);
 
-  const isPasswordMatch = await bcrypt.compare(password, user.password);
+  const isPasswordMatch = await user.comparePassword(password);
 
   if (!isPasswordMatch) throw Error("Invalid credentials, Try again!", 400);
 
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "1d",
-  });
+  const token = user.getSignedToken();
 
   res
     .cookie("token", token, {
       httpOnly: true,
       sameSite: "strict",
       secure: true,
-      path: "/",
       maxAge: 24 * 60 * 60 * 1000,
     })
     .json({
       success: true,
-      data: { token, user },
+      data: { user },
       message: "Signed in successfully!",
     });
 });
@@ -53,7 +49,7 @@ export const signOut = catchAsyncErrors(async (req, res) => {
 export const aboutMe = catchAsyncErrors(async (req, res) => {
   if (!req.user) throw Error("You are not Authorized!", 400);
 
-  const user = await SiteManager.findById(req.user._id);
+  const user = await SiteManager.findById(req.user.id);
   console.log(user);
   res.json({
     success: true,
@@ -70,7 +66,7 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
 
   if (!req.user) throw Error("You are not authorized!");
 
-  const user = await SiteManager.findById(req.user._id).select("+password");
+  const user = await SiteManager.findById(req.user.id).select("+password");
 
   if (!user)
     res
@@ -85,14 +81,12 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
         message: "You're not authorized, You have been signed out!",
       });
 
-  const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
+  const isPasswordMatch = await user.comparePassword(oldPassword);
 
   if (!isPasswordMatch)
     throw Error("Old Password is incorrect, Try again!", 400);
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(newPassword, salt);
-  user.password = hashedPassword;
+  user.password = newPassword;
   await user.save();
 
   res
@@ -147,9 +141,7 @@ export const resetPassword = catchAsyncErrors(async (req, res) => {
     throw Error("Token expired");
   }
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(newPassword, salt);
-  user.password = hashedPassword;
+  user.password = newPassword;
   await user.save();
 
   resetRecord.used = true;

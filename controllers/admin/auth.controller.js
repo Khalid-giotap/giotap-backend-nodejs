@@ -4,32 +4,24 @@ import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
 
 export const signUp = catchAsyncErrors(async (req, res) => {
   const { fullName, email, password, phone } = req.body;
-  const existingUser = await Admin.findOne({
+  let user = await Admin.findOne({
     $or: [{ email }, { phone }],
   });
 
-  if (existingUser) {
+  if (user) {
     throw Error("Try different credentials!", 400);
   }
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-  console.log(req.body);
-  const user = await Admin.create({
+  user = await Admin.create({
     fullName,
     email,
     phone,
-    password: hashedPassword,
-  });
-  const { _id } = user;
-  const token = jwt.sign({ userId: _id, email }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+    password,
   });
 
   res.status(201).json({
     success: true,
     data: {
-      token,
       user,
     },
     message: "Account Registered Successfully!",
@@ -38,26 +30,23 @@ export const signUp = catchAsyncErrors(async (req, res) => {
 
 export const signIn = catchAsyncErrors(async (req, res) => {
   const { email, password } = req.body;
-  const userExist = await Admin.findOne({ email }).select("+password");
-  if (!userExist) {
+  let user = await Admin.findOne({ email }).select("+password");
+  if (!user) {
     throw Error("Invalid credentials!", 409);
   }
 
-  const isPasswordMatch = await bcrypt.compare(password, userExist.password);
+  const isPasswordMatch = await user.comparePassword(password);
   if (!isPasswordMatch) {
     throw Error("Invalid credentials!");
   }
 
-  const token = jwt.sign({ userId: userExist._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
-  });
+  const token = user.getSignedToken();
 
   res
     .cookie("token", token, {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
-
       maxAge: 7 * 24 * 60 * 60 * 1000,
     }) // 7 days
     .status(200)
@@ -65,7 +54,7 @@ export const signIn = catchAsyncErrors(async (req, res) => {
       success: true,
       data: {
         token,
-        user: userExist,
+        user,
       },
       message: "Signed in successfully!",
     });
@@ -100,19 +89,17 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
 
   if (!newPassword) throw Error("New password is required!");
 
-  const user = await Admin.findById(req.user._id).select("+password");
+  const user = await Admin.findById(req.user.id).select("+password");
   if (!user) {
     throw Error("Some error Occurred! please try again!", 404);
   }
 
-  const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
+  const isPasswordMatch = await user.comparePassword(oldPassword);
+
   if (!isPasswordMatch)
     throw Error("Old Password is incorrect, Try again!", 400);
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-  user.password = hashedPassword;
+  user.password = newPassword;
   await user.save();
 
   res
@@ -159,13 +146,8 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
     return res.status(400).json({ message: "Token expired" });
   }
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(newPassword, salt);
   // Update user password here...
-  await User.updateOne(
-    { email: resetRecord.email },
-    { password: hashedPassword }
-  );
+  await User.updateOne({ email: resetRecord.email }, { password: newPassword });
 
   // Mark token as used
   resetRecord.used = true;

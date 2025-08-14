@@ -9,23 +9,48 @@ export const createSiteManager = catchAsyncErrors(async (req, res) => {
     throw Error("All fields are required", 400);
   }
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
-  const siteManager = await SiteManager.create({
+  const user = await SiteManager.create({
     fullName,
     email,
     phone,
-    password: hashedPassword,
+    password,
   });
 
-  if (!siteManager)
-    throw Error("Some error adding Site Manager, Try again!", 400);
+  if (!user) throw Error("Some error adding Site Manager, Try again!", 400);
 
   res.json({
     success: true,
-    data: { siteManager },
+    data: { siteManager: user },
     message: "Site Manager account created successfully!",
+  });
+});
+
+export const createSiteManagers = catchAsyncErrors(async (req, res) => {
+  const { managers } = req.body;
+
+  if (!Array.isArray(managers) || managers.length === 0) {
+    throw Error("Please provide an array of managers");
+  }
+
+  // Add createdBy automatically if needed
+
+  const createdManagers = await SiteManager.insertMany(managers, {
+    ordered: false,
+  });
+
+  if (!createdManagers)
+    throw Error("Some error occurred creating managers, Try again!");
+
+  const totalCount = await SiteManager.countDocuments();
+
+  res.status(201).json({
+    success: true,
+    data: {
+      managers: createdManagers,
+      totalCount,
+      totalPages: Math.ceil(totalCount / 10),
+    },
+    message: "Managers created successfully",
   });
 });
 

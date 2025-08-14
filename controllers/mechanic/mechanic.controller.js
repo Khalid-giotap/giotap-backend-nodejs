@@ -16,23 +16,48 @@ export const createMechanic = catchAsyncErrors(async (req, res) => {
     throw Error("Mechanic with same email or phone exist already!");
   }
 
-  console.log(mechanic);
-
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
   mechanic = await Mechanic.create({
     fullName,
     email,
     phone,
-    password: hashedPassword,
+    password,
   });
-  console.log(mechanic);
+
   if (!mechanic) throw Error("Some error adding mechanic, Try again!");
 
   res.status(201).json({
     success: true,
     data: { mechanic },
     message: "Mechanic added successfully!",
+  });
+});
+
+export const createMechanics = catchAsyncErrors(async (req, res) => {
+  const { mechanics } = req.body;
+
+  if (!Array.isArray(mechanics) || mechanics.length === 0) {
+    throw Error("Please provide an array of mechanics");
+  }
+
+  // Add createdBy automatically if needed
+
+  const createdMechanics = await Mechanic.insertMany(mechanics, {
+    ordered: false,
+  });
+
+  if (!createdMechanics)
+    throw Error("Some error occurred creating mechanics, Try again!");
+
+  const totalCount = await Mechanic.countDocuments();
+
+  res.status(201).json({
+    success: true,
+    data: {
+      mechanics: createdMechanics,
+      totalCount,
+      totalPages: Math.ceil(totalCount / 10),
+    },
+    message: "Mechanics created successfully",
   });
 });
 
@@ -89,9 +114,8 @@ export const deleteMechanic = catchAsyncErrors(async (req, res) => {
 });
 
 export const getMechanics = catchAsyncErrors(async (req, res) => {
-
   const mechanics = await Mechanic.find();
-  
+
   if (!mechanics) throw Error("Mechanics not found!");
 
   res.status(200).json({
@@ -102,9 +126,8 @@ export const getMechanics = catchAsyncErrors(async (req, res) => {
 });
 
 export const deleteMechanics = catchAsyncErrors(async (req, res) => {
-
   const mechanics = await Mechanic.deleteMany();
-  
+
   if (!mechanics) throw Error("Mechanics not found!");
 
   res.status(200).json({

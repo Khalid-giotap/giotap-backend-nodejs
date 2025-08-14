@@ -5,27 +5,48 @@ import Admin from "../../models/admin.model.js";
 export const createAdmin = catchAsyncErrors(async (req, res) => {
   const { email, phone, password } = req.body;
 
-  const existingAdmin = await Admin.findOne({ $or: [{ email }, { phone }] });
-  console.log(existingAdmin)
-  if (existingAdmin)
-    throw Error("Admin already exist with same phone or email", 400);
-  
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-  
-  const newAdmin = await Admin.create({
-    ...req.body,
-    password: hashedPassword,
-  });
-  
-  console.log(newAdmin)
-  if (!newAdmin) throw Error("Error creating admin, Try again!", 400);
+  let user = await Admin.findOne({ $or: [{ email }, { phone }] });
+
+  if (user) throw Error("Admin already exist with same phone or email", 400);
+
+  user = await Admin.create({ ...req.body });
+  if (!user) throw Error("Error creating admin, Try again!", 400);
+
   res.status(201).json({
     success: true,
     data: {
-      admin: newAdmin,
+      user,
     },
     message: "Admin account created successfully!",
+  });
+});
+
+export const createAdmins = catchAsyncErrors(async (req, res) => {
+  const { admins } = req.body;
+
+  if (!Array.isArray(admins) || admins.length === 0) {
+    return res.status(400).json({ error: "Please provide an array of admins" });
+  }
+
+  // Add createdBy automatically if needed
+
+  const createdAdmins = await Admin.insertMany(admins, {
+    ordered: false,
+  });
+
+  if (!createdAdmins)
+    throw Error("Some error occurred creating admins, Try again!");
+
+  const totalCount = await Admin.countDocuments();
+
+  res.status(201).json({
+    success: true,
+    data: {
+      admins: createdAdmins,
+      totalCount,
+      totalPages: Math.ceil(totalCount / 10),
+    },
+    message: "Admins created successfully",
   });
 });
 
@@ -33,12 +54,12 @@ export const getAdmin = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
   console.log("we are at getAdmin", id);
   if (!id) throw Error("Id is required to get admin!", 400);
-  const admin = await Admin.findById(id);
-  if (!admin) throw Error("Invalid resource, admin does not exist!", 404);
+  const user = await Admin.findById(id);
+  if (!user) throw Error("Invalid resource, admin does not exist!", 404);
 
   res.json({
     success: true,
-    data: { admin },
+    data: { user },
     message: "Admin found successfully!",
   });
 });
@@ -47,12 +68,12 @@ export const deleteAdmin = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
   if (!id) throw Error("Id is required to delete admin!", 400);
 
-  const admin = await Admin.findByIdAndDelete(id);
-  if (!admin) throw Error("Invalid resource, admin does not exist!", 404);
+  const user = await Admin.findByIdAndDelete(id);
+  if (!user) throw Error("Invalid resource, admin does not exist!", 404);
 
   res.json({
     success: true,
-    data: { admin },
+    data: { user },
     message: "Admin deleted successfully!",
   });
 });
@@ -73,34 +94,47 @@ export const updateAdmin = catchAsyncErrors(async (req, res) => {
       400
     );
 
-  const admin = await Admin.findByIdAndUpdate(id, req.body, { new: true });
-  if (!admin) throw Error("Invalid resource, admin not exist!", 404);
+  const user = await Admin.findByIdAndUpdate(id, req.body, { new: true });
+  if (!user) throw Error("Invalid resource, admin not exist!", 404);
   res.json({
     success: true,
     message: "Admin updated successfully!",
-    data: { admin },
+    data: { user },
   });
 });
 
 export const deleteAdmins = catchAsyncErrors(async (req, res) => {
-  const admins = await Admin.deleteMany();
-  if (!admins) throw Error("Admins not found!", 404);
+  const users = await Admin.deleteMany();
+  if (!users) throw Error("Admins not found!", 404);
 
   res.json({
     success: true,
-    data: { admins },
+    data: { users },
     message: "Admins deleted successfully!",
   });
 });
 
 export const getAdmins = catchAsyncErrors(async (req, res) => {
+  const { page = 1, limit = 10, search = "", role = "super_admin" } = req.query;
+  const users = await Admin.find({
+    $or: [{ name: { $regex: search, $options: "i" } }, { role }],
+  })
+    .populate("schoolId")
+    .populate("transportCompanyId")
+    .skip((page - 1) * limit)
+    .limit(limit);
 
-  const admins = await Admin.find();
+  if (!users) throw Error("Admins not found!", 404);
 
-  if (!admins) throw Error("Admins not found!", 404);
+  const totalCount = await Admin.countDocuments();
   res.json({
     success: true,
-    data: { admins },
+    data: {
+      users,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
+    },
     message: "Admins found successfully!",
   });
 });

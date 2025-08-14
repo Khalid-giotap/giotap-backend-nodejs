@@ -6,17 +6,15 @@ import jwt from "jsonwebtoken";
 
 export const signIn = catchAsyncErrors(async (req, res) => {
   const { email, password } = req.body;
-  const aide = await Aide.findOne({ email }).select("+password");
+  let user = await Aide.findOne({ email }).select("+password");
 
-  if (!aide) throw Error("Invalid credentials!");
+  if (!user) throw Error("Invalid credentials!");
 
-  const isPasswordMatch = await bcrypt.compare(password, aide.password);
+  const isPasswordMatch = await user.comparePassword(password);
 
   if (!isPasswordMatch) throw Error("Invalid credentials!");
 
-  const token = jwt.sign({ userId: aide._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
-  });
+  const token = user.getSignedToken();
   res
     .cookie("token", token, {
       httpOnly: true,
@@ -26,7 +24,7 @@ export const signIn = catchAsyncErrors(async (req, res) => {
     })
     .json({
       success: true,
-      data: { token, aide },
+      data: { user },
       message: "Signed in successfully!",
     });
 });
@@ -59,14 +57,13 @@ export const signOut = catchAsyncErrors(async (req, res) => {
 export const changePassword = catchAsyncErrors(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   if (!oldPassword) throw Error("Old password is required!");
-
   if (!newPassword) throw Error("New password is required!");
 
   if (!req.user) {
     throw Error("You are not authorized!", 400);
   }
 
-  const user = await Aide.findById(req.user._id).select("+password");
+  const user = await Aide.findById(req.user.id).select("+password");
   if (!user)
     res
       .clearCookie("token", {
@@ -84,10 +81,7 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
   if (!isPasswordMatch)
     throw Error("Old Password is incorrect, Try again!", 400);
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-  user.password = hashedPassword;
+  user.password = newPassword;
   await user.save();
 
   res
@@ -138,14 +132,8 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
   if (resetRecord.expiresAt < new Date()) {
     return res.status(400).json({ message: "Token expired" });
   }
-
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(newPassword, salt);
   // Update user password here...
-  await Aide.updateOne(
-    { email: resetRecord.email },
-    { password: hashedPassword }
-  );
+  await Aide.updateOne({ email: resetRecord.email }, { password: newPassword });
 
   // Mark token as used
   resetRecord.used = true;

@@ -1,4 +1,6 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
+import Mechanic from "../../models/mechanic.model.js";
+import Route from "../../models/route.model.js";
 import Vehicle from "../../models/vehicle.model.js";
 
 // Single
@@ -19,6 +21,38 @@ export const createVehicle = catchAsyncErrors(async (req, res) => {
     message: "Vehicle added successfully!",
   });
 });
+
+
+export const createVehicles = catchAsyncErrors(async (req, res) => {
+  const { vehicles } = req.body;
+
+  if (!Array.isArray(vehicles) || vehicles.length === 0) {
+    throw Error("Please provide an array of vehicles");
+  }
+
+  // Add createdBy automatically if needed
+
+  const createdVehicles = await Vehicle.insertMany(vehicles, {
+    ordered: false,
+  });
+
+  if (!createdVehicles)
+    throw Error("Some error occurred creating vehicles, Try again!");
+
+  const totalCount = await Vehicle.countDocuments();
+
+  res.status(201).json({
+    success: true,
+    data: {
+      vehicles: createdVehicles,
+      totalCount,
+      totalPages: Math.ceil(totalCount / 10),
+    },
+    message: "Vehicles created successfully",
+  });
+});
+
+
 export const getVehicle = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
   if (!id) throw Error("Id is required to find the vehicle!");
@@ -58,6 +92,11 @@ export const deleteVehicle = catchAsyncErrors(async (req, res) => {
   const vehicle = await Vehicle.findByIdAndDelete(id);
 
   if (!vehicle) throw Error("Invalid, resource, Vehicle does not exist!", 400);
+  await Mechanic.findOneAndUpdate(
+    { assignedVehicle: id },
+    { assignedVehicle: null }
+  );
+  await Route.findOneAndUpdate({ vehicleId: id }, { vehicleId: null });
 
   res.json({
     success: true,
@@ -77,13 +116,14 @@ export const deleteVehicles = catchAsyncErrors(async (req, res) => {
     message: "Vehicles deleted successfully!",
   });
 });
+
 export const getVehicles = catchAsyncErrors(async (req, res) => {
   const vehicles = await Vehicle.find();
 
   if (!vehicles) {
     throw Error("Vehicles not found!", 404);
   }
-  
+
   res.json({
     success: true,
     data: { vehicles },

@@ -6,12 +6,14 @@ import {
   deleteSiteManager,
   deleteSiteManagers,
   getSiteManagers,
+  createSiteManagers,
 } from "../../controllers/site-manager/manager.controller.js";
 
 const managerRouter = express.Router();
 
 // Singles required /:id
 managerRouter.post("/", createSiteManager);
+managerRouter.post("/bulk", createSiteManagers);
 managerRouter.get("/:id", getSiteManager);
 managerRouter.put("/:id", updateSiteManager);
 managerRouter.delete("/:id", deleteSiteManager);

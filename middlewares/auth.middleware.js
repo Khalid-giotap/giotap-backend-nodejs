@@ -34,7 +34,7 @@ export const isAdminAuthenticated = catchAsyncErrors(async (req, res, next) => {
 
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
   console.log(decoded);
-  const user = await Admin.findById(decoded.userId);
+  const user = await Admin.findById(decoded.id);
   if (!user) {
     return res.status(401).json({
       success: false,

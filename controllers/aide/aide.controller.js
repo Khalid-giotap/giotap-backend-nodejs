@@ -1,6 +1,6 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
 import Aide from "../../models/aide.model.js";
-import bcrypt from "bcryptjs";
+import Route from "../../models/route.model.js";
 
 export const createAide = catchAsyncErrors(async (req, res) => {
   const { fullName, email, password, phone } = req.body;
@@ -10,13 +10,11 @@ export const createAide = catchAsyncErrors(async (req, res) => {
   });
   if (aideExist)
     throw Error("Aide already exist with same phone or email", 400);
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
 
   const aide = await Aide.create({
     fullName,
     email,
-    password: hashedPassword,
+    password,
     phone,
   });
   if (!aide) throw Error("Some error creating aide, Try again!");
@@ -30,8 +28,8 @@ export const createAide = catchAsyncErrors(async (req, res) => {
 
 export const getAide = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
-  console.log(id);
-  if (!id) throw Error("Id is required to get admin!", 400);
+  if (!id) throw Error("Id is required to get aide!", 400);
+
   const aide = await Aide.findById(id);
   if (!aide) throw Error("Invalid resource, aide does not exist!", 404);
 
@@ -39,6 +37,35 @@ export const getAide = catchAsyncErrors(async (req, res) => {
     success: true,
     data: { aide },
     message: "Aide found successfully!",
+  });
+});
+
+export const createAides = catchAsyncErrors(async (req, res) => {
+  const { aides } = req.body;
+
+  if (!Array.isArray(aides) || aides.length === 0) {
+    throw Error("Please provide an array of aides");
+  }
+
+  // Add createdBy automatically if needed
+
+  const createdAides = await Aide.insertMany(aides, {
+    ordered: false,
+  });
+
+  if (!createdAides)
+    throw Error("Some error occurred creating aides, Try again!");
+
+  const totalCount = await Aide.countDocuments();
+
+  res.status(201).json({
+    success: true,
+    data: {
+      aides: createdAides,
+      totalCount,
+      totalPages: Math.ceil(totalCount / 10),
+    },
+    message: "Aides created successfully",
   });
 });
 
@@ -62,7 +89,7 @@ export const deleteAide = catchAsyncErrors(async (req, res) => {
 
   const aide = await Aide.findByIdAndDelete(id);
   if (!aide) throw Error("Invalid resource, aide does not exist!", 404);
-
+  await Route.findOneAndUpdate({ aideId: id }, { aideId: null });
   res.json({
     success: true,
     data: { aide },

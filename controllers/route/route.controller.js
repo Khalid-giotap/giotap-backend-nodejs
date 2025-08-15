@@ -3,16 +3,17 @@ import Route from "../../models/route.model.js";
 import Vehicle from "../../models/vehicle.model.js";
 
 export const createRoute = catchAsyncErrors(async (req, res) => {
-  const { name, startPoint, endPoint } = req.body;
-
-  if (!name || !startPoint || !endPoint) {
+  const { name, startLocation, endLocation } = req.body;
+  console.log(req.body);
+  if (!name || !startLocation || !endLocation) {
     throw Error("All fields are required!", 400);
   }
 
   const existingRoute = await Route.findOne({ name });
   if (existingRoute) throw Error("Route already exist with same name!");
 
-  const route = await Route.create(req.body);
+  const route = await Route.create({ ...req.body });
+
   if (!route) {
     throw Error("Error creating Route!", 400);
   }
@@ -24,7 +25,6 @@ export const createRoute = catchAsyncErrors(async (req, res) => {
     message: "Route created successfully!",
   });
 });
-
 
 export const createRoutes = catchAsyncErrors(async (req, res) => {
   const { routes } = req.body;

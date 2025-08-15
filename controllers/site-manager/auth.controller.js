@@ -1,6 +1,6 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
 import bcrypt from "bcryptjs";
-import SiteManager from "../../models/site-manger.model.js";
+import SiteManager from "../../models/site-manager.model.js";
 import jwt from "jsonwebtoken";
 import PasswordReset from "../../models/password-reset.model.js";
 

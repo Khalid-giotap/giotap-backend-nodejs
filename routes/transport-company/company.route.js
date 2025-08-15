@@ -14,7 +14,7 @@ const companyRouter = express.Router();
 companyRouter.post("/", isAdminAuthenticated, createCompany);
 
 // POST /admin/bulk
-companyRouter.post("/bulk", isAdminAuthenticated, createCompanies);
+companyRouter.post("/companies", isAdminAuthenticated, createCompanies);
 
 // GET /admin/company?page=1&limit=10&search=name&status=active
 companyRouter.get("/", getCompanies);

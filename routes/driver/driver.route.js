@@ -5,7 +5,6 @@ import {
   deleteDriver,
   getDriver,
   getDrivers,
-  unAssignDriver,
   updateDriver,
 } from "../../controllers/driver/driver.controller.js";
 
@@ -13,7 +12,7 @@ const driverRouter = express.Router();
 
 // Will create a driver with body
 driverRouter.post("/", createDriver);
-driverRouter.post("/bulk", createDrivers);
+driverRouter.post("/drivers", createDrivers);
 
 // returns the list of drivers
 driverRouter.get("/", getDrivers);
@@ -26,6 +25,5 @@ driverRouter.put("/:id", updateDriver);
 
 // Will delete a driver require id
 driverRouter.delete("/:id", deleteDriver);
-driverRouter.delete("/unassign/:id", unAssignDriver);
 
 export default driverRouter;

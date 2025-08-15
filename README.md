@@ -1,206 +1,225 @@
-# GIOTAP Backend Node.js
+# GioTap Backend API
 
-Smart School Transportation MVP API built with Node.js, Express.js, TypeScript, and MongoDB.
+A comprehensive Node.js backend API for GioTap - Smart School Transportation Management System.
 
-## 🚀 Quick Start
+## 🚀 Features
 
-### Prerequisites
+- **Multi-role Authentication**: Admin, Driver, Aide, Site Manager, Mechanic, Parent
+- **Real-time Communication**: Socket.io integration
+- **Email & SMS Notifications**: Automated alerts and notifications
+- **GPS Tracking**: Vehicle location tracking
+- **RFID Integration**: Student attendance tracking
+- **Route Management**: Smart route optimization
+- **Vehicle Management**: Fleet management system
+
+## 🛠️ Tech Stack
+
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database**: MongoDB with Mongoose
+- **Authentication**: JWT (JSON Web Tokens)
+- **Real-time**: Socket.io
+- **Email**: Nodemailer
+- **SMS**: Twilio
+- **Validation**: Express-validator
+- **Rate Limiting**: Express-rate-limit
+
+## 📋 Prerequisites
+
 - Node.js (v16 or higher)
+- MongoDB (v4.4 or higher)
 - npm or yarn
-- MongoDB (for database)
 
-### Installation
+## 🔧 Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Khalid-giotap/giotap-backend-nodejs.git
+   cd giotap-backend-nodejs
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment Setup**
+   ```bash
+   cp env.example .env
+   ```
+   
+   Edit `.env` file with your configuration:
+   ```env
+   # Server Configuration
+   NODE_ENV=development
+   PORT=5000
+
+   # Database
+   MONGODB_URI=mongodb://localhost:27017/giotap
+
+   # JWT Configuration
+   JWT_SECRET=your-super-secret-jwt-key-here
+   JWT_EXPIRES_IN=7d
+
+   # Email Configuration (Gmail)
+   EMAIL_HOST=smtp.gmail.com
+   EMAIL_PORT=587
+   EMAIL_USER=your-email@gmail.com
+   EMAIL_PASS=your-app-password
+   EMAIL_FROM=GioTap <noreply@giotap.com>
+
+   # Twilio Configuration
+   TWILIO_ACCOUNT_SID=your-twilio-account-sid
+   TWILIO_AUTH_TOKEN=your-twilio-auth-token
+   TWILIO_FROM_NUMBER=whatsapp:+14155238886
+
+   # Frontend URL
+   FRONTEND_URL=http://localhost:3000
+
+   # CORS Origins
+   CORS_ORIGIN=http://localhost:3000,http://localhost:3050
+   ```
+
+4. **Start the server**
+   ```bash
+   # Development
+   npm run dev
+
+   # Production
+   npm start
+   ```
+
+## 🔐 Security Features
+
+- **JWT Authentication**: Secure token-based authentication
+- **Password Hashing**: bcryptjs for password security
+- **Rate Limiting**: Protection against brute force attacks
+- **Input Validation**: Express-validator for data validation
+- **CORS Protection**: Configurable cross-origin resource sharing
+- **Environment Variables**: Secure credential management
+
+## 📚 API Documentation
+
+### Authentication Endpoints
+
+#### Admin Authentication
+- `POST /api/v1/admin/auth/sign-up` - Register new admin
+- `POST /api/v1/admin/auth/sign-in` - Admin login
+- `DELETE /api/v1/admin/auth/sign-out` - Admin logout
+- `GET /api/v1/admin/auth/me` - Get admin profile
+- `PUT /api/v1/admin/auth/change-password` - Change password
+- `POST /api/v1/admin/auth/forgot-password` - Request password reset
+- `PUT /api/v1/admin/auth/reset-password` - Reset password
+
+#### Driver Authentication
+- `POST /api/v1/driver/auth/sign-in` - Driver login
+- `DELETE /api/v1/driver/auth/sign-out` - Driver logout
+- `GET /api/v1/driver/auth/me` - Get driver profile
+
+#### Aide Authentication
+- `POST /api/v1/aide/auth/sign-in` - Aide login
+- `DELETE /api/v1/aide/auth/sign-out` - Aide logout
+- `GET /api/v1/aide/auth/me` - Get aide profile
+
+### Management Endpoints
+
+#### Vehicle Management
+- `GET /api/v1/admin/vehicle` - Get all vehicles
+- `POST /api/v1/admin/vehicle` - Create new vehicle
+- `GET /api/v1/admin/vehicle/:id` - Get vehicle by ID
+- `PUT /api/v1/admin/vehicle/:id` - Update vehicle
+- `DELETE /api/v1/admin/vehicle/:id` - Delete vehicle
+
+#### Route Management
+- `GET /api/v1/admin/route` - Get all routes
+- `POST /api/v1/admin/route` - Create new route
+- `GET /api/v1/admin/route/:id` - Get route by ID
+- `PUT /api/v1/admin/route/:id` - Update route
+- `DELETE /api/v1/admin/route/:id` - Delete route
+
+#### Driver Management
+- `GET /api/v1/admin/driver` - Get all drivers
+- `POST /api/v1/admin/driver` - Create new driver
+- `GET /api/v1/admin/driver/:id` - Get driver by ID
+- `PUT /api/v1/admin/driver/:id` - Update driver
+- `DELETE /api/v1/admin/driver/:id` - Delete driver
+
+## 🔄 Real-time Features
+
+The API includes Socket.io integration for real-time features:
+
+- **Live GPS Tracking**: Real-time vehicle location updates
+- **Attendance Alerts**: Instant notifications for student attendance
+- **Emergency Alerts**: Real-time emergency notifications
+- **Status Updates**: Live status updates for vehicles and routes
+
+## 📧 Notification System
+
+### Email Notifications
+- Login alerts
+- Password reset links
+- System notifications
+- Emergency alerts
+
+### SMS Notifications
+- Login confirmations
+- Emergency alerts
+- Attendance notifications
+- Route updates
+
+## 🗄️ Database Schema
+
+### Core Models
+- **Admin**: System administrators
+- **Driver**: Vehicle drivers
+- **Aide**: Transportation aides
+- **SiteManager**: School site managers
+- **Mechanic**: Vehicle maintenance staff
+- **Parent**: Student parents
+- **Student**: School students
+- **Vehicle**: Transportation vehicles
+- **Route**: Transportation routes
+- **School**: Educational institutions
+- **TransportCompany**: Transportation companies
+
+## 🧪 Testing
+
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd giotap-backend-nodejs
+# Run tests (when implemented)
+npm test
 
-# Install dependencies
-npm install
-
-# Create environment file
-cp .env.example .env
-# Edit .env with your configuration
+# Run tests in watch mode
+npm run test:watch
 ```
 
-### Development
+## 📦 Deployment
+
+### Production Checklist
+- [ ] Set `NODE_ENV=production`
+- [ ] Configure production database
+- [ ] Set up SSL certificates
+- [ ] Configure production email/SMS services
+- [ ] Set up monitoring and logging
+- [ ] Configure backup strategies
+
+### Docker Deployment
 ```bash
-# Start development server with hot reload
-npm run dev
+# Build image
+docker build -t giotap-backend .
 
-# Or use nodemon
-npm run dev:watch
+# Run container
+docker run -p 5000:5000 giotap-backend
 ```
 
-### Production
-```bash
-# Build the project
-npm run build
+## 🔍 Monitoring
 
-# Start production server
-npm start
-```
+### Health Check
+- `GET /health` - Server health status
 
-## 📁 Project Structure
-
-```
-giotap-backend-nodejs/
-├── app.ts              # Main application entry point
-├── dist/               # Compiled JavaScript files
-├── node_modules/       # Dependencies
-├── package.json        # Project configuration
-├── tsconfig.json       # TypeScript configuration
-├── nodemon.json        # Nodemon configuration
-└── README.md          # This file
-```
-
-## 🔧 Available Scripts
-
-- `npm run build` - Compile TypeScript to JavaScript
-- `npm run dev` - Start development server with ts-node-dev
-- `npm run dev:watch` - Start development server with nodemon
-- `npm start` - Start production server
-- `npm test` - Run tests (to be implemented)
-
-## 🛠️ TypeScript Configuration
-
-The project uses TypeScript with the following key configurations:
-
-- **Target**: ES2020
-- **Module**: CommonJS
-- **Strict Mode**: Enabled
-- **Source Maps**: Enabled
-- **Declaration Files**: Generated
-
-## 📝 Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
-```env
-# Server Configuration
-PORT=3000
-NODE_ENV=development
-
-# Database Configuration
-MONGODB_URI=mongodb://localhost:27017/giotap
-
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key
-JWT_EXPIRES_IN=7d
-
-# Email Configuration
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
-```
-
-## 🎯 API Endpoints
-
-- `GET /` - Welcome message
-- `GET /health` - Health check endpoint
-
-## 🔍 How to Create a TypeScript Node.js Project from Scratch
-
-### Step 1: Initialize Project
-```bash
-mkdir my-typescript-project
-cd my-typescript-project
-npm init -y
-```
-
-### Step 2: Install TypeScript Dependencies
-```bash
-npm install --save-dev typescript @types/node ts-node ts-node-dev nodemon
-npm install express cors dotenv
-npm install --save-dev @types/express @types/cors
-```
-
-### Step 3: Create TypeScript Configuration
-Create `tsconfig.json`:
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "module": "commonjs",
-    "rootDir": "./",
-    "outDir": "dist",
-    "strict": true,
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "declaration": true,
-    "sourceMap": true
-  },
-  "include": ["**/*.ts"],
-  "exclude": ["dist", "node_modules", "**/*.test.ts"]
-}
-```
-
-### Step 4: Update package.json Scripts
-```json
-{
-  "scripts": {
-    "build": "tsc",
-    "start": "node dist/app.js",
-    "dev": "ts-node-dev --respawn --transpile-only app.ts",
-    "dev:watch": "nodemon --exec ts-node app.ts"
-  }
-}
-```
-
-### Step 5: Create Nodemon Configuration
-Create `nodemon.json`:
-```json
-{
-  "watch": ["**/*.ts"],
-  "exec": "ts-node app.ts",
-  "ext": "ts,json",
-  "ignore": ["dist", "node_modules"]
-}
-```
-
-### Step 6: Create Your First TypeScript File
-Create `app.ts`:
-```typescript
-import express, { Express, Request, Response } from 'express';
-
-const app: Express = express();
-const port = 3000;
-
-app.get('/', (req: Request, res: Response) => {
-  res.json({ message: 'Hello TypeScript!' });
-});
-
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
-```
-
-## 🐛 Common Issues and Solutions
-
-### TypeScript Compilation Errors
-- Ensure all dependencies have proper `@types` packages installed
-- Check `tsconfig.json` configuration
-- Verify import/export syntax
-
-### Module Resolution Issues
-- Make sure `moduleResolution` is set to "node" in `tsconfig.json`
-- Use proper import paths
-- Check if `esModuleInterop` is enabled
-
-### Development Server Issues
-- Ensure `ts-node` is installed
-- Check if `ts-node-dev` is properly configured
-- Verify file paths in scripts
-
-## 📚 Additional Resources
-
-- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
-- [Express.js Documentation](https://expressjs.com/)
-- [Node.js Documentation](https://nodejs.org/docs/)
+### Logging
+- Application logs
+- Error tracking
+- Performance monitoring
 
 ## 🤝 Contributing
 
@@ -213,3 +232,23 @@ app.listen(port, () => {
 ## 📄 License
 
 This project is licensed under the ISC License.
+
+## 🆘 Support
+
+For support and questions:
+- Create an issue on GitHub
+- Contact the development team
+- Check the documentation
+
+## 🔄 Changelog
+
+### v1.0.0
+- Initial release
+- Multi-role authentication
+- Vehicle and route management
+- Real-time GPS tracking
+- Email and SMS notifications
+
+---
+
+**Note**: This is a production-ready backend API for the GioTap school transportation management system. Ensure all environment variables are properly configured before deployment.

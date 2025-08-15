@@ -1,7 +1,6 @@
 const errorHandler = (err, req, res, next) => {
   try {
     let error = { ...err };
-
     error.message = err.message;
 
     // Mongoose Validation Error
@@ -26,21 +25,30 @@ const errorHandler = (err, req, res, next) => {
 
     // MongoDB Duplicate Key
     if (err.code === 11000) {
-      console.log(err);
-      error = new Error("Duplicate key error");
+      const field = Object.keys(err.keyValue)[0];
+      error = new Error(`${field} already exists`);
       error.statusCode = 400;
     }
 
     // Mongoose CastError (Invalid ObjectId)
     if (err.name === "CastError") {
-      console.log(err.stack)
       error = new Error("Resource not found! Invalid Id");
       error.statusCode = 400;
     }
-    console.log(error);
+
+    // Log error in development
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error details:", {
+        message: error.message,
+        stack: err.stack,
+        statusCode: error.statusCode,
+      });
+    }
+
     res.status(error.statusCode || 500).json({
       success: false,
       message: error.message || "Internal Server Error",
+      ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
     });
   } catch (error) {
     next(error);

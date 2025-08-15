@@ -1,6 +1,9 @@
 import Admin from "../../models/admin.model.js";
 import jwt from "jsonwebtoken";
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
+import { sendEmail } from "../../utils/sendEmail.js";
+import { alertWelcome } from "../../email-templates/alert.js";
+import { sendSms } from "../../utils/sendSms.js";
 
 export const signUp = catchAsyncErrors(async (req, res) => {
   const { fullName, email, password, phone } = req.body;
@@ -9,7 +12,9 @@ export const signUp = catchAsyncErrors(async (req, res) => {
   });
 
   if (user) {
-    throw Error("Try different credentials!", 400);
+    const error = new Error("User with these credentials already exists");
+    error.statusCode = 400;
+    throw error;
   }
 
   user = await Admin.create({
@@ -29,26 +34,42 @@ export const signUp = catchAsyncErrors(async (req, res) => {
 });
 
 export const signIn = catchAsyncErrors(async (req, res) => {
+  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
   const { email, password } = req.body;
   let user = await Admin.findOne({ email }).select("+password");
   if (!user) {
-    throw Error("Invalid credentials!", 409);
+    const error = new Error("Invalid credentials!");
+    error.statusCode = 401;
+    throw error;
   }
 
   const isPasswordMatch = await user.comparePassword(password);
+
   if (!isPasswordMatch) {
-    throw Error("Invalid credentials!");
+    const error = new Error("Invalid credentials!");
+    error.statusCode = 401;
+    throw error;
   }
 
   const token = user.getSignedToken();
+  
+  // Send notifications asynchronously
+  try {
+    await sendEmail(user.email, "Login Alert", alertWelcome(user.fullName));
+    await sendSms("Login Alert: You logged in successfully!", user.phone);
+  } catch (notificationError) {
+    // Log but don't fail the login
+    console.error("Notification sending failed:", notificationError.message);
+  }
 
   res
     .cookie("token", token, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
-    }) // 7 days
+    })
     .status(200)
     .json({
       success: true,
@@ -61,6 +82,12 @@ export const signIn = catchAsyncErrors(async (req, res) => {
 });
 
 export const aboutMe = catchAsyncErrors(async (req, res) => {
+  if (!req.user) {
+    const error = new Error("Unauthorized!");
+    error.statusCode = 401;
+    throw error;
+  }
+  
   return res.status(200).json({
     success: true,
     data: { user: req.user },
@@ -71,9 +98,9 @@ export const aboutMe = catchAsyncErrors(async (req, res) => {
 export const signOut = catchAsyncErrors(async (req, res) => {
   res
     .clearCookie("token", {
-      httpOnly: true, // same as when cookie was set
-      secure: true, // same as when cookie was set
-      sameSite: "strict", // same as when cookie was set
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: "strict",
     })
     .status(200)
     .json({
@@ -85,25 +112,39 @@ export const signOut = catchAsyncErrors(async (req, res) => {
 
 export const changePassword = catchAsyncErrors(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  if (!oldPassword) throw Error("Old password is required!");
+  
+  if (!oldPassword) {
+    const error = new Error("Old password is required!");
+    error.statusCode = 400;
+    throw error;
+  }
 
-  if (!newPassword) throw Error("New password is required!");
+  if (!newPassword) {
+    const error = new Error("New password is required!");
+    error.statusCode = 400;
+    throw error;
+  }
 
   const user = await Admin.findById(req.user.id).select("+password");
   if (!user) {
-    throw Error("Some error Occurred! please try again!", 404);
+    const error = new Error("User not found!");
+    error.statusCode = 404;
+    throw error;
   }
 
   const isPasswordMatch = await user.comparePassword(oldPassword);
 
-  if (!isPasswordMatch)
-    throw Error("Old Password is incorrect, Try again!", 400);
+  if (!isPasswordMatch) {
+    const error = new Error("Old Password is incorrect, Try again!");
+    error.statusCode = 400;
+    throw error;
+  }
 
   user.password = newPassword;
   await user.save();
 
   res
-    .cookie("token", null) // 7 days
+    .clearCookie("token")
     .status(200)
     .json({
       success: true,
@@ -128,8 +169,12 @@ export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
     expiresAt: expires,
   });
 
-  // todo Send email to user
-  // sendEmail(email, `https://yourapp.com/reset-password?token=${token}`)
+  // Send email to user
+  try {
+    await sendEmail(email, "Password Reset", `Reset your password: ${process.env.FRONTEND_URL}/reset-password?token=${token}`);
+  } catch (emailError) {
+    console.error("Password reset email failed:", emailError.message);
+  }
 
   res.json({ success: true, message: "Reset link sent to email" });
 });
@@ -139,11 +184,15 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
 
   const resetRecord = await PasswordReset.findOne({ token, used: false });
   if (!resetRecord) {
-    return res.status(400).json({ message: "Invalid or expired token" });
+    const error = new Error("Invalid or expired token");
+    error.statusCode = 400;
+    throw error;
   }
 
   if (resetRecord.expiresAt < new Date()) {
-    return res.status(400).json({ message: "Token expired" });
+    const error = new Error("Token expired");
+    error.statusCode = 400;
+    throw error;
   }
 
   // Update user password here...

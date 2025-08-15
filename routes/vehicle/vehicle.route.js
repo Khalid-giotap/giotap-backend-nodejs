@@ -12,7 +12,7 @@ import {
 const vehicleRouter = express.Router();
 
 vehicleRouter.post("/", createVehicle);
-vehicleRouter.post("/bulk", createVehicles);
+vehicleRouter.post("/vehicles", createVehicles);
 vehicleRouter.get("/", getVehicles);
 vehicleRouter.get("/:id", getVehicle);
 vehicleRouter.delete("/:id", deleteVehicle);

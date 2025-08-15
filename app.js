@@ -2,10 +2,13 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import cors from "cors";
+import { createServer } from "http";
+import { Server } from "socket.io";
 dotenv.config();
 
 import errorHandler from "./middlewares/error.middleware.js";
 import { dbConnect } from "./database/db.js";
+import { apiLimiter, authLimiter } from "./middlewares/rateLimit.middleware.js";
 
 // Routes
 import adminAuthRoutes from "./routes/admin/auth.route.js";
@@ -22,27 +25,42 @@ import mechanicRoutes from "./routes/mechanic/mechanic.route.js";
 import mechanicAuthRoutes from "./routes/mechanic/auth.route.js";
 import companyRoutes from "./routes/transport-company/company.route.js";
 import schoolRoutes from "./routes/school/school.route.js";
+import parentRoutes from "./routes/parent/parent.route.js";
 
 const app = express();
-const _PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
+const server = createServer(app);
+
+// CORS configuration
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(",")
+    : ["http://localhost:3050", "http://localhost:3000"],
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+const io = new Server(server, {
+  cors: corsOptions,
+});
 
 // Handling Uncaught Exception
 process.on("uncaughtException", (err) => {
-  console.log("Error: ", err.message);
-  console.log("Shutting down the server due to Uncaught Exception");
+  console.error("Uncaught Exception:", err.message);
+  console.error("Shutting down the server due to Uncaught Exception");
   process.exit(1);
 });
 
 // Middlewares
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
-app.use(
-  cors({
-    origin: ["http://localhost:3050", "http://localhost:3000"],
-    credentials: true,
-  })
-);
+app.use(cors(corsOptions));
+
+// todo 
+// // Rate limiting
+// app.use("/api/v1/*/auth", authLimiter);
+// app.use("/api/v1", apiLimiter);
 
 //* Apis
 
@@ -62,36 +80,65 @@ app.use("/api/v1/admin/vehicle", vehicleRoutes);
 app.use("/api/v1/admin/site-manager", siteManagerRoutes);
 app.use("/api/v1/site-manager/auth", managerAuthRoutes);
 
-// Site Manager
+// Mechanic
 app.use("/api/v1/admin/mechanic", mechanicRoutes);
 app.use("/api/v1/mechanic/auth", mechanicAuthRoutes);
 
 // Transport Company
 app.use("/api/v1/admin/company", companyRoutes);
 
-// Transport Company
+// School
 app.use("/api/v1/admin/school", schoolRoutes);
+
+// Parent
+app.use("/api/v1/admin/parent", parentRoutes);
 
 // Admin
 app.use("/api/v1/admin/auth", adminAuthRoutes);
 app.use("/api/v1/admin", adminRoutes);
 
-app.use(errorHandler);
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Server is healthy",
+    timestamp: new Date().toISOString(),
+  });
+});
 
-//
 app.get("/", (req, res) => {
   res.send("Welcome to Giotap Backend API");
 });
 
-dbConnect();
-const server = app.listen(_PORT, () => {
-  console.log(`Server is running on port http://localhost:${_PORT}`);
+// Socket.io connection handling
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
 });
+
+// Error handling middleware
+app.use(errorHandler);
+
+// Connect to database and start server
+dbConnect()
+  .then(() => {
+    server.listen(PORT, () => {
+      console.log(`Server is running on port http://localhost:${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+    });
+  })
+  .catch((error) => {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  });
 
 // Unhandled Rejection
 process.on("unhandledRejection", (err) => {
-  console.log("Error: ", err.message);
-  console.log("Shutting down the server due to Unhandled Rejection");
+  console.error("Unhandled Rejection:", err.message);
+  console.error("Shutting down the server due to Unhandled Rejection");
   server.close(() => {
     process.exit(1);
   });

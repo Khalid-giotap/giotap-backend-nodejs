@@ -12,7 +12,7 @@ import {
 const routeRouter = express.Router();
 
 routeRouter.post("/", createRoute);
-routeRouter.post("/bulk", createRoutes);
+routeRouter.post("/routes", createRoutes);
 
 routeRouter.get("/", getRoutes);
 routeRouter.get("/:id", getRoute);

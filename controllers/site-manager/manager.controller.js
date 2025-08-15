@@ -1,5 +1,5 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
-import SiteManager from "../../models/site-manger.model.js";
+import SiteManager from "../../models/site-manager.model.js";
 import bcrypt from "bcryptjs";
 
 export const createSiteManager = catchAsyncErrors(async (req, res) => {

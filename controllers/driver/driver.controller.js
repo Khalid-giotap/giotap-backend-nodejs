@@ -130,7 +130,7 @@ export const deleteDriver = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const getDrivers = catchAsyncErrors(async (req, res, next) => {
-  const { page = 1, limit = 10, onDuty, search = "" } = req.query;
+  const { page = 1, limit = 10, onDuty = true, search = "" } = req.query;
   const drivers = await Driver.find({
     $or: [{ name: { $regex: search, $options: "i" } }, { isOnDuty: onDuty }],
   })

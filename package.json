@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "GIOTAP – Smart School Transportation MVP API for built with Node.js, Express.js, and MongoDB. This project powers the core logic for a smart school mobility system",
   "main": "app.js",
-  "type":"module",
+  "type": "module",
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
@@ -29,10 +29,14 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "express-rate-limit": "^7.5.1",
+    "express-validator": "^7.0.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.17.0",
     "nodemailer": "^7.0.5",
-    "resend": "^5.0.0"
+    "resend": "^5.0.0",
+    "socket.io": "^4.8.1",
+    "twilio": "^5.8.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

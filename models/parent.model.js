@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 
 const ParentSchema = new mongoose.Schema(
   {
@@ -16,7 +18,7 @@ const ParentSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],
-            index: true,
+      index: true,
     },
     phone: {
       type: String,
@@ -30,6 +32,10 @@ const ParentSchema = new mongoose.Schema(
       minlength: [6, "Password must be at least 6 characters long"],
       select: false, // Exclude password from query results by default
     },
+    status: {
+      type: Boolean,
+      default: true,
+    },
     children: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -40,6 +46,26 @@ const ParentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+ParentSchema.methods.getSignedToken = function () {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  });
+};
+
+ParentSchema.methods.comparePassword = async function (password) {
+  return await bcrypt.compare(password, this.password);
+};
+
+ParentSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+ParentSchema.index({ email: 1, phone: 1 }, { unique: true });
 const Parent = mongoose.model("Parent", ParentSchema);
 
 export default Parent;

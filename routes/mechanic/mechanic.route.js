@@ -12,7 +12,7 @@ import {
 const mechanicRouter = express.Router();
 
 mechanicRouter.post("/", createMechanic);
-mechanicRouter.post("/bulk", createMechanics);
+mechanicRouter.post("/mechanics", createMechanics);
 mechanicRouter.get("/:id", getMechanic);
 mechanicRouter.put("/:id", updateMechanic);
 mechanicRouter.delete("/:id", deleteMechanic);

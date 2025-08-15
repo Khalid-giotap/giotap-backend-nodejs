@@ -24,9 +24,8 @@ export const createAdmin = catchAsyncErrors(async (req, res) => {
 export const createAdmins = catchAsyncErrors(async (req, res) => {
   const { admins } = req.body;
 
-  if (!Array.isArray(admins) || admins.length === 0) {
-    return res.status(400).json({ error: "Please provide an array of admins" });
-  }
+  if (!Array.isArray(admins) || admins.length === 0)
+    throw Error("Please provide an array of admins");
 
   // Add createdBy automatically if needed
 

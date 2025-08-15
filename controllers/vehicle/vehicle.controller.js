@@ -7,9 +7,10 @@ import Vehicle from "../../models/vehicle.model.js";
 export const createVehicle = catchAsyncErrors(async (req, res) => {
   const { plateNumber } = req.body;
   let vehicle = await Vehicle.findOne({ plateNumber });
+
   if (vehicle) throw Error("Vehicle with same plate number exist already!");
 
-  vehicle = await Vehicle.create(req.body);
+  vehicle = await Vehicle.create({ ...req.body });
 
   if (!vehicle) throw Error("Error creating vehicle!", 400);
 
@@ -21,7 +22,6 @@ export const createVehicle = catchAsyncErrors(async (req, res) => {
     message: "Vehicle added successfully!",
   });
 });
-
 
 export const createVehicles = catchAsyncErrors(async (req, res) => {
   const { vehicles } = req.body;
@@ -51,7 +51,6 @@ export const createVehicles = catchAsyncErrors(async (req, res) => {
     message: "Vehicles created successfully",
   });
 });
-
 
 export const getVehicle = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
@@ -118,15 +117,36 @@ export const deleteVehicles = catchAsyncErrors(async (req, res) => {
 });
 
 export const getVehicles = catchAsyncErrors(async (req, res) => {
-  const vehicles = await Vehicle.find();
+  const { page = 1, limit = 10, search = "", filters = {} } = req.query;
+  const query = {};
 
+  if (search) {
+    query.plateNumber = { $regex: search, $options: "i" };
+    query.model = { $regex: search, $options: "i" };
+  }
+  if (Object.keys(filters).length > 0) {
+    query.$and = Object.entries(filters).map(([key, value]) => ({
+      [key]: value,
+    }));
+  }
+
+  const vehicles = await Vehicle.find(query)
+    .skip((page - 1) * limit)
+    .limit(limit);
   if (!vehicles) {
     throw Error("Vehicles not found!", 404);
   }
 
+  const totalCount = await Vehicle.countDocuments();
+
   res.json({
     success: true,
-    data: { vehicles },
+    data: {
+      vehicles,
+      totalCount,
+      currentPage: page,
+      totalPages: Math.ceil(totalCount / limit),
+    },
     message: "Vehicles found successfully",
   });
 });

@@ -3,7 +3,7 @@ import TransportCompany from "../../models/transport-company.model.js";
 import Vehicle from "../../models/vehicle.model.js";
 import School from "../../models/school.model.js";
 import Admin from "../../models/admin.model.js";
-import SiteManager from "../../models/site-manger.model.js";
+import SiteManager from "../../models/site-manager.model.js";
 
 export const createCompany = catchAsyncErrors(async (req, res) => {
   let company = await TransportCompany.findOne({ name: req.body.name });

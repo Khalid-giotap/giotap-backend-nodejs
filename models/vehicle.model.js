@@ -46,15 +46,12 @@ const VehicleSchema = new mongoose.Schema(
     currentLocation: {
       lat: {
         type: Number,
-        required: [true, "End Location latitude is required"],
       },
       lng: {
         type: Number,
-        required: [true, "End Location longitude is required"],
       },
       name: {
         type: String,
-        required: [true, "End Location name is required"],
         trim: true,
       },
     },
@@ -62,7 +59,7 @@ const VehicleSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-VehicleSchema.index({ plateNumber: 1 }, { unique: true });
+
 const Vehicle = mongoose.model("Vehicle", VehicleSchema);
 
 export default Vehicle;

@@ -12,7 +12,7 @@ import { isAdminAuthenticated } from "../../middlewares/auth.middleware.js";
 const schoolRouter = express.Router();
 
 schoolRouter.post("/add", addSchool);
-schoolRouter.post("/bulk", isAdminAuthenticated, addSchools);
+schoolRouter.post("/schools", isAdminAuthenticated, addSchools);
 schoolRouter.get("/:id", getSchool);
 schoolRouter.get("/", getSchools);
 schoolRouter.delete("/", deleteSchools);

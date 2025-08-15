@@ -14,7 +14,7 @@ const aideRouter = express.Router();
 // route : /api/v1/admin/aide/
 
 aideRouter.post("/", createAide);
-aideRouter.post("/bulk", createAides);
+aideRouter.post("/drivers", createAides);
 
 // Singles
 aideRouter.get("/:id", getAide);

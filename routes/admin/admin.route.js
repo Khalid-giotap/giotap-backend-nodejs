@@ -13,7 +13,7 @@ import {
 const authRouter = express.Router();
 
 authRouter.post("/", createAdmin);
-authRouter.post("/bulk", createAdmins);
+authRouter.post("/admins", createAdmins);
 
 // Singles require /:id
 authRouter.get("/:id", getAdmin);

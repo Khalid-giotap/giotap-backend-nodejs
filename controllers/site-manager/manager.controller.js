@@ -20,13 +20,13 @@ export const createSiteManager = catchAsyncErrors(async (req, res) => {
 
   res.json({
     success: true,
-    data: { siteManager: user },
+    data: { manager: user },
     message: "Site Manager account created successfully!",
   });
 });
 
 export const createSiteManagers = catchAsyncErrors(async (req, res) => {
-  const { managers } = req.body;
+  const managers = req.body;
 
   if (!Array.isArray(managers) || managers.length === 0) {
     throw Error("Please provide an array of managers");
@@ -34,9 +34,8 @@ export const createSiteManagers = catchAsyncErrors(async (req, res) => {
 
   // Add createdBy automatically if needed
 
-  const createdManagers = await SiteManager.insertMany(managers, {
-    ordered: false,
-  });
+
+  const createdManagers = await SiteManager.insertMany(managers);
 
   if (!createdManagers)
     throw Error("Some error occurred creating managers, Try again!");
@@ -68,7 +67,7 @@ export const getSiteManager = catchAsyncErrors(async (req, res) => {
 
   res.json({
     success: true,
-    data: { siteManager },
+    data: { manager: siteManager },
     message: "Site Manager found successfully!",
   });
 });
@@ -91,7 +90,7 @@ export const updateSiteManager = catchAsyncErrors(async (req, res) => {
 
   res.json({
     success: true,
-    data: { siteManager },
+    data: { manager: siteManager },
     message: "Site Manager updated successfully!",
   });
 });
@@ -110,7 +109,7 @@ export const deleteSiteManager = catchAsyncErrors(async (req, res) => {
 
   res.json({
     success: true,
-    data: { siteManager },
+    data: { manager: siteManager },
     message: "Site Manager deleted successfully!",
   });
 });
@@ -123,7 +122,7 @@ export const getSiteManagers = catchAsyncErrors(async (req, res) => {
 
   res.json({
     success: true,
-    data: { siteManagers },
+    data: { managers: siteManagers },
     message: "Site Managers deleted successfully!",
   });
 });
@@ -136,7 +135,7 @@ export const deleteSiteManagers = catchAsyncErrors(async (req, res) => {
 
   res.json({
     success: true,
-    data: { siteManagers },
+    data: { managers: siteManagers },
     message: "Site Managers deleted successfully!",
   });
 });

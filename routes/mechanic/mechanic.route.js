@@ -8,16 +8,55 @@ import {
   getMechanics,
   updateMechanic,
 } from "../../controllers/mechanic/mechanic.controller.js";
+import { isAuthenticated } from "../../middlewares/auth.middleware.js";
+import { isRoleAuthorized } from "../../middlewares/role.middleware.js";
 
 const mechanicRouter = express.Router();
 
-mechanicRouter.post("/", createMechanic);
-mechanicRouter.post("/mechanics", createMechanics);
-mechanicRouter.get("/:id", getMechanic);
-mechanicRouter.put("/:id", updateMechanic);
-mechanicRouter.delete("/:id", deleteMechanic);
+mechanicRouter.post(
+  "/",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  createMechanic
+);
 
-mechanicRouter.get("/", getMechanics);
-mechanicRouter.get("/", deleteMechanics);
+mechanicRouter.post(
+  "/mechanics",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  createMechanics
+);
+
+mechanicRouter.get(
+  "/:id",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  getMechanic
+);
+mechanicRouter.put(
+  "/:id",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  updateMechanic
+);
+mechanicRouter.delete(
+  "/:id",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  deleteMechanic
+);
+
+mechanicRouter.get(
+  "/",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  getMechanics
+);
+mechanicRouter.delete(
+  "/",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  deleteMechanics
+);
 
 export default mechanicRouter;

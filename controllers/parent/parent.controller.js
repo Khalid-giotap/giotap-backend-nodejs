@@ -1,5 +1,7 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
 import Parent from "../../models/parent.model.js";
+import Student from "../../models/student.model.js";
+import { createError } from "../../utils/error.js";
 
 export const createParent = catchAsyncErrors(async (req, res) => {
   const { phone, email } = req.body;
@@ -24,8 +26,8 @@ export const createParent = catchAsyncErrors(async (req, res) => {
 });
 
 export const createParents = catchAsyncErrors(async (req, res) => {
-  const { parents } = req.body;
-
+  const parents = req.body;
+  console.log(parents);
   if (!Array.isArray(parents) || parents.length === 0)
     throw Error("Please provide an array of parents");
 
@@ -152,5 +154,37 @@ export const deleteParents = catchAsyncErrors(async (req, res) => {
       parents,
     },
     message: "Parents deleted successfully!",
+  });
+});
+
+export const getChildren = catchAsyncErrors(async (req, res) => {
+  const parentId = req.user._id;
+
+  const children = await Student.find({ parent: parentId });
+
+  if (!children) throw createError("No children found, Try again!");
+
+  res.status(200).json({
+    success: true,
+    data: {
+      children,
+    },
+    message: "Children found successfully!",
+  });
+});
+
+export const getChild = catchAsyncErrors(async (req, res) => {
+  const { id } = req.params;
+
+  const child = await Student.findById(id);
+
+  if (!child) throw createError("No child found, Try again!");
+
+  res.status(200).json({
+    success: true,
+    data: {
+      child,
+    },
+    message: "Children found successfully!",
   });
 });

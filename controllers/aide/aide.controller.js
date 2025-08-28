@@ -40,18 +40,31 @@ export const getAide = catchAsyncErrors(async (req, res) => {
   });
 });
 
+export const getAvailableAides = catchAsyncErrors(async (req, res) => {
+  const query = {
+    vehicleId: null,
+  };
+
+  const aides = await Aide.find(query);
+  if (!aides) throw Error("Invalid resource, aides does not exist!", 404);
+
+  res.json({
+    success: true,
+    data: { aides },
+    message: "Available aides found successfully!",
+  });
+});
+
 export const createAides = catchAsyncErrors(async (req, res) => {
-  const { aides } = req.body;
+  const aides = req.body;
+  console.log(aides);
 
   if (!Array.isArray(aides) || aides.length === 0) {
     throw Error("Please provide an array of aides");
   }
-
   // Add createdBy automatically if needed
 
-  const createdAides = await Aide.insertMany(aides, {
-    ordered: false,
-  });
+  const createdAides = await Aide.insertMany(aides);
 
   if (!createdAides)
     throw Error("Some error occurred creating aides, Try again!");
@@ -71,9 +84,9 @@ export const createAides = catchAsyncErrors(async (req, res) => {
 
 export const updateAide = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
-  if (!id) throw Error("Id is required to delete aide!", 400);
+  if (!id) throw Error("Id is required to update aide!", 400);
 
-  const aide = await Aide.findByIdAndUpdate(id, { ...req.body });
+  const aide = await Aide.findByIdAndUpdate(id, { ...req.body }, { new: true });
 
   res.json({
     success: true,
@@ -100,7 +113,7 @@ export const deleteAide = catchAsyncErrors(async (req, res) => {
 export const getAides = catchAsyncErrors(async (req, res) => {
   const aides = await Aide.find();
   if (!aides) throw Error("Aides not found!", 404);
-
+  console.log(aides);
   res.json({
     success: true,
     data: { aides },
@@ -109,12 +122,17 @@ export const getAides = catchAsyncErrors(async (req, res) => {
 });
 
 export const deleteAides = catchAsyncErrors(async (req, res) => {
-  const aides = await Aide.deleteMany();
-  if (!aides) throw Error("Aides not found!", 404);
+  const aides = req.body;
+  console.log(aides);
 
+  console.log(await Aide.countDocuments());
+  const deletedAides = await Aide.deleteMany({ _id: { $in: aides } });
+  if (!deletedAides) throw Error("Aides not found!", 404);
+
+  console.log(await Aide.countDocuments());
   res.json({
     success: true,
-    data: { aides },
-    message: "Aide deleted successfully!",
+    data: { deletedAides },
+    message: "Aides deleted successfully!",
   });
 });

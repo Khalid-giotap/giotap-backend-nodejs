@@ -1,0 +1,38 @@
+1. What is the complete role of the Transport Admin?
+The Transport Admin manages one transport company’s day-to-day operations:
+Create/edit routes (AM/PM/field trips), stops, timings.
+Assign/replace drivers, aides, buses to routes.
+Monitor live tracking, delays, incidents, and attendance.
+Issue/activate/deactivate RFID cards.
+Handle parent/school requests (absence, address change).
+Open/track maintenance tickets; view fuel/health status.
+Generate reports (attendance, on-time %, incidents).
+Manage company-level users (drivers/aides/site managers/mechanics).
+Scope limit: Transport Admin sees only their own company’s data. No cross-company access.
+
+2. How does a Transport Admin differ from a Site Manager?
+Transport Admin = company-level control (all depots, all routes).
+Site Manager = depot/yard-level ops (just their location).
+3. Site Manager responsibilities (detailed)
+Daily roll-out: confirm drivers/aides present (RFID/face ID), confirm buses “ready”.
+Yard control: parking layout, bus warm-up, fuel check, cleanliness status.
+Pre-trip inspections: run checklist; flag defects for mechanics.
+Go/No-Go decisions per route; escalate replacements to Transport Admin.
+Issue reporting: create maintenance tickets; track status.
+Arrival control: confirm returns, note defects/fuel for next shift.
+Site Manager does NOT create new schools/companies or billing; they operate within the company defined by the Transport Admin.
+4. Who handles transport companies—Transport Admin or Super Admin?
+Super Admin (our platform owner) manages companies (create, suspend, plan).
+Transport Admin is assigned to one company after Super Admin creates it.
+5. Can a Transport Admin register a company?
+No (for MVP). Only Super Admin can create/register companies and assign Transport Admins.
+Reason: keeps billing/compliance centralized and avoids scope creep.
+6. What about subscriptions?
+We will support subscriptions, but to avoid extra cost right now, MVP uses:
+Manual activation by Super Admin (plan, start/end date, status).
+We can record invoices manually (amount, due date, paid/unpaid) without a gateway.
+Plans are metadata only (Basic/Team/Company/Enterprise) controlling feature flags.
+Stripe (or Paddle) integration is a Phase-2 enhancement, not included in the current budget/timeline.
+7. If Stripe is required now, is there extra charge?
+we will NOT integrate Stripe in MVP.
+Deliverables remain within 2–3 months without Stripe: manual subscription control by Super Admin. Since us product owners will give access to at least 1 company for testing and developing we need to charge them based on subscription so don’t worry I will be handling that manually but later we have to have subscriptions control

@@ -37,13 +37,21 @@ const MechanicSchema = new mongoose.Schema(
       ref: "Vehicle",
       default: null,
     },
+    role: {
+      type: String,
+      default: "mechanic",
+    },
+    status: {
+      type: String,
+      enum: ["active", "inactive", "suspended"],
+      default: "active",
+    },
   },
   { timestamps: true }
 );
 
 MechanicSchema.methods.getSignedToken = function () {
-  
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: this._id, role: "mechanic" }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
@@ -58,7 +66,7 @@ MechanicSchema.pre("save", async function (next) {
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  console.log(this.password,'this.password in pre save')
+  console.log(this.password, "this.password in pre save");
   next();
 });
 

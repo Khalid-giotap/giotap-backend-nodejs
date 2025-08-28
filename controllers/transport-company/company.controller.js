@@ -167,10 +167,12 @@ export const updateCompany = catchAsyncErrors(async (req, res) => {
 export const deleteCompany = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
   const company = await TransportCompany.findByIdAndDelete(id);
+
   await Admin.findOneAndUpdate(
     { transportCompanyId: id },
     { transportCompanyId: null }
   );
+  
   await SiteManager.findOneAndUpdate(
     { transportCompanyId: id },
     { transportCompanyId: null }

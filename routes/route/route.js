@@ -6,19 +6,91 @@ import {
   getRoutes,
   updateRoute,
   deleteRoutes,
-  createRoutes
+  createRoutes,
 } from "../../controllers/route/route.controller.js";
+import { isAuthenticated } from "../../middlewares/auth.middleware.js";
+import { isRoleAuthorized } from "../../middlewares/role.middleware.js";
 
 const routeRouter = express.Router();
 
-routeRouter.post("/", createRoute);
-routeRouter.post("/routes", createRoutes);
+routeRouter.post(
+  "/",
+  // isAuthenticated,
+  // isRoleAuthorized([
+  //   "super-admin",
+  //   "transport-admin",
+  //   "school-admin",
+  //   "site_manager",
+  // ]),
+  createRoute
+);
+routeRouter.post(
+  "/routes",
+  isAuthenticated,
+  isRoleAuthorized([
+    "super-admin",
+    "transport-admin",
+    "school-admin",
+    "site_manager",
+  ]),
+  createRoutes
+);
 
-routeRouter.get("/", getRoutes);
-routeRouter.get("/:id", getRoute);
-routeRouter.put("/:id", updateRoute);
+routeRouter.get(
+  "/",
+  isAuthenticated,
+  isRoleAuthorized([
+    "super-admin",
+    "transport-admin",
+    "school-admin",
+    "site_manager",
+  ]),
+  getRoutes
+);
+routeRouter.get(
+  "/:id",
+  isAuthenticated,
+  isRoleAuthorized([
+    "super-admin",
+    "transport-admin",
+    "school-admin",
+    "site_manager",
+  ]),
+  getRoute
+);
+routeRouter.put(
+  "/:id",
+  isAuthenticated,
+  isRoleAuthorized([
+    "super-admin",
+    "transport-admin",
+    "school-admin",
+    "site_manager",
+  ]),
+  updateRoute
+);
 
-routeRouter.delete("/:id", deleteRoute);
-routeRouter.delete("/", deleteRoutes);
+routeRouter.delete(
+  "/:id",
+  isAuthenticated,
+  isRoleAuthorized([
+    "super-admin",
+    "transport-admin",
+    "school-admin",
+    "site_manager",
+  ]),
+  deleteRoute
+);
+routeRouter.delete(
+  "/",
+  isAuthenticated,
+  isRoleAuthorized([
+    "super-admin",
+    "transport-admin",
+    "school-admin",
+    "site_manager",
+  ]),
+  deleteRoutes
+);
 
 export default routeRouter;

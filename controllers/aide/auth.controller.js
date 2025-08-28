@@ -20,7 +20,7 @@ export const signIn = catchAsyncErrors(async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     })
     .json({
       success: true,

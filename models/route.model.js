@@ -42,18 +42,22 @@ const RouteSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "School",
       index: true,
+      default: null,
     },
     driverId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Driver",
+      default: null,
     },
     aideId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Aide",
+      default: null,
     },
     vehicleId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Vehicle",
+      default: null,
     },
     stops: [
       {

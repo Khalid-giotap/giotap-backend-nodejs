@@ -34,8 +34,8 @@ const AdminSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["super_admin", "transport_admin", "school_admin"],
-      default: "super_admin",
+      enum: ["super-admin", "transport-admin", "school-admin"],
+      default: "super-admin",
     },
     transportCompanyId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -47,12 +47,18 @@ const AdminSchema = new mongoose.Schema(
       ref: "School",
       default: null,
     },
+
+    status: {
+      type: String,
+      enum: ["pending", "active", "inactive","suspended"],
+      default: "pending",
+    },
   },
   { timestamps: true }
 );
 
 AdminSchema.methods.getSignedToken = function () {
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: this._id, role: this.role }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };

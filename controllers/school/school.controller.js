@@ -1,13 +1,19 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
 import School from "../../models/school.model.js";
+import Student from "../../models/student.model.js";
 
 export const addSchool = catchAsyncErrors(async (req, res) => {
-  const { name } = req.body;
+  const { name, email, phone } = req.body;
+  console.log(req.body);
   let school = await School.findOne({ $or: [{ email }, { phone }, { name }] });
   if (school) {
     throw Error("School already exists");
   }
-  school = await School.create(req.body);
+  school = await School.create({
+    ...req.body,
+    createdBy: req.user._id,
+    routeId: req.body.routeId || null,
+  });
   if (!school) throw Error("Some error adding school, Try again!");
 
   res.status(201).json({
@@ -18,7 +24,7 @@ export const addSchool = catchAsyncErrors(async (req, res) => {
 });
 
 export const addSchools = catchAsyncErrors(async (req, res) => {
-  const { schools } = req.body;
+  const schools = req.body;
 
   if (!Array.isArray(schools) || schools.length === 0) {
     return res
@@ -29,23 +35,18 @@ export const addSchools = catchAsyncErrors(async (req, res) => {
   // Add createdBy automatically if needed
   const schoolsToInsert = schools.map((c) => ({
     ...c,
-    createdBy: req.user.id,
+    createdBy: req.user._id,
   }));
 
-  const createdSchools = await School.insertMany(schoolsToInsert, {
-    ordered: false,
-  });
+  const createdSchools = await School.insertMany(schoolsToInsert);
 
   if (!createdSchools) throw Error("Some error adding schools, Try again!");
 
-  const totalCount = await School.countDocuments();
 
   res.status(201).json({
     success: true,
     data: {
       schools: createdSchools,
-      totalCount,
-      totalPages: Math.ceil(totalCount / 10),
     },
     message: "Schools added successfully",
   });
@@ -56,10 +57,11 @@ export const getSchool = catchAsyncErrors(async (req, res) => {
   if (!id) throw Error("Id is required to find school!");
   let school = await School.findById(id);
   if (!school) throw Error("Invalid resource, School does not exist!");
+  const students = await Student.find({ schoolId: school._id });
 
   res.status(200).json({
     success: true,
-    data: { school },
+    data: { school, students },
     message: "School found successfully!",
   });
 });
@@ -103,6 +105,22 @@ export const getSchools = catchAsyncErrors(async (req, res) => {
       currentPage: page,
     },
     message: "School found successfully!",
+  });
+});
+
+export const getAvailableSchools = catchAsyncErrors(async (req, res) => {
+  const query = {
+    routeId: null,
+  };
+  
+  const schools = await School.find(query);
+  console.log(schools);
+  res.status(200).json({
+    success: true,
+    data: {
+      schools,
+    },
+    message: "Available Schools found successfully!",
   });
 });
 

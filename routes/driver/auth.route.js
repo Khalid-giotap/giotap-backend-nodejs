@@ -7,18 +7,18 @@ import {
   signIn,
   signOut,
 } from "../../controllers/driver/auth.controller.js";
-import { isDriverAuthenticated } from "../../middlewares/auth.middleware.js";
+import { isAuthenticated } from "../../middlewares/auth.middleware.js";
 const driverAuthRouter = express.Router();
 
 //
 driverAuthRouter.post("/sign-in", signIn);
 
-driverAuthRouter.get("/me", isDriverAuthenticated, aboutMe);
+driverAuthRouter.get("/me", isAuthenticated, aboutMe);
 
 driverAuthRouter.delete("/sign-out", signOut);
 
 // Passwords
-driverAuthRouter.put("/change-password", isDriverAuthenticated, changePassword);
+driverAuthRouter.put("/change-password", isAuthenticated, changePassword);
 driverAuthRouter.post("/forgot-password", requestPasswordReset);
 driverAuthRouter.put("/reset-password", resetPassword);
 

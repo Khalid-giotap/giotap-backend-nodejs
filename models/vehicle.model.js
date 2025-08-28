@@ -55,10 +55,25 @@ const VehicleSchema = new mongoose.Schema(
         trim: true,
       },
     },
+    // Add to vehicle.model.js
+    fuelLevel: {
+      type: Number, // percentage
+      default: 100,
+    },
+    lastMaintenance: {
+      type: Date,
+    },
+    nextMaintenance: {
+      type: Date,
+    },
+    healthStatus: {
+      type: String,
+      enum: ["excellent", "good", "fair", "poor"],
+      default: "good",
+    },
   },
   { timestamps: true }
 );
-
 
 const Vehicle = mongoose.model("Vehicle", VehicleSchema);
 

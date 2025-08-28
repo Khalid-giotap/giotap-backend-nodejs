@@ -33,7 +33,7 @@ export const createMechanic = catchAsyncErrors(async (req, res) => {
 });
 
 export const createMechanics = catchAsyncErrors(async (req, res) => {
-  const { mechanics } = req.body;
+  const mechanics = req.body;
 
   if (!Array.isArray(mechanics) || mechanics.length === 0) {
     throw Error("Please provide an array of mechanics");
@@ -41,9 +41,7 @@ export const createMechanics = catchAsyncErrors(async (req, res) => {
 
   // Add createdBy automatically if needed
 
-  const createdMechanics = await Mechanic.insertMany(mechanics, {
-    ordered: false,
-  });
+  const createdMechanics = await Mechanic.insertMany(mechanics);
 
   if (!createdMechanics)
     throw Error("Some error occurred creating mechanics, Try again!");
@@ -83,9 +81,11 @@ export const updateMechanic = catchAsyncErrors(async (req, res) => {
 
   if (!id) throw Error("Id is required to find the mechanic!");
 
+  delete req.body['password']
   const mechanic = await Mechanic.findByIdAndUpdate(id, req.body, {
     new: true,
-  });
+    runValidators: true,
+  })
   if (!mechanic) throw Error("Invalid resource, mechanic does not exist!");
 
   console.log(mechanic);

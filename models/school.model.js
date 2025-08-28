@@ -54,8 +54,13 @@ const SchoolSchema = new mongoose.Schema(
       default: null,
     },
     isActive: {
-      type: Boolean,
-      default: true,
+      type: String,
+      enum: ["active", "inactive", "pending", "suspended"],
+      default: "active",
+    },
+    noOfStudents: {
+      type: Number,
+      default: 0,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

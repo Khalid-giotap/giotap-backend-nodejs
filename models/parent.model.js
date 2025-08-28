@@ -33,8 +33,9 @@ const ParentSchema = new mongoose.Schema(
       select: false, // Exclude password from query results by default
     },
     status: {
-      type: Boolean,
-      default: true,
+      type: String,
+      enum: ["active", "inactive", "suspended"],
+      default: "active",
     },
     children: [
       {
@@ -42,12 +43,16 @@ const ParentSchema = new mongoose.Schema(
         ref: "Student",
       },
     ],
+    role: {
+      type: String,
+      default: "parent",
+    },
   },
   { timestamps: true }
 );
 
 ParentSchema.methods.getSignedToken = function () {
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: this._id,role: 'parent' }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };

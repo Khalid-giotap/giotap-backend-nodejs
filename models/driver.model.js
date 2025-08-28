@@ -54,15 +54,17 @@ const DriverSchema = new mongoose.Schema(
     experience: {
       type: Number,
       default: 0,
-    },
+    },  
+    role:{
+      type: String,
+      default: "driver",
+    }
   },
   { timestamps: true }
 );
 
-
 DriverSchema.methods.getSignedToken = function () {
-  
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: this._id, role: 'driver' }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
@@ -79,7 +81,6 @@ DriverSchema.pre("save", async function (next) {
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
-
 
 DriverSchema.index({ email: 1, phone: 1 }, { unique: true });
 const Driver = mongoose.model("Driver", DriverSchema);

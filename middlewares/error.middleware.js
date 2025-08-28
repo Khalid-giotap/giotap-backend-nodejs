@@ -3,6 +3,11 @@ const errorHandler = (err, req, res, next) => {
     let error = { ...err };
     error.message = err.message;
 
+    if (err.name === "MongoBulkWriteError") {
+      error = new Error(err.message);
+      error.statusCode = 400;
+    }
+
     // Mongoose Validation Error
     if (err.name === "ValidationError") {
       const message = Object.values(err.errors || {})
@@ -24,15 +29,18 @@ const errorHandler = (err, req, res, next) => {
     }
 
     // MongoDB Duplicate Key
+
     if (err.code === 11000) {
-      const field = Object.keys(err.keyValue)[0];
-      error = new Error(`${field} already exists`);
-      error.statusCode = 400;
+      if (err.keyValue) {
+        const field = Object.keys(err.keyValue)[0];
+        error = new Error(`${field} already exists`);
+        error.statusCode = 400;
+      }
     }
 
     // Mongoose CastError (Invalid ObjectId)
     if (err.name === "CastError") {
-      error = new Error("Resource not found! Invalid Id");
+      error = new Error("CastError:Invalid Mongodb Id");
       error.statusCode = 400;
     }
 

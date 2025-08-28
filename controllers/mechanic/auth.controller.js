@@ -27,7 +27,7 @@ export const signIn = catchAsyncErrors(async (req, res) => {
     .cookie("token", token, {
       httpOnly: true,
       secure: true,
-      maxAge: 1000 * 60 * 60 * 24 * 30,
+      maxAge: 24 * 60 * 60 * 1000,
       sameSite: "strict",
     })
     .status(200)

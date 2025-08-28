@@ -10,7 +10,10 @@ export const createVehicle = catchAsyncErrors(async (req, res) => {
 
   if (vehicle) throw Error("Vehicle with same plate number exist already!");
 
-  vehicle = await Vehicle.create({ ...req.body });
+  vehicle = await Vehicle.create({
+    ...req.body,
+    routeId: null,
+  });
 
   if (!vehicle) throw Error("Error creating vehicle!", 400);
 
@@ -24,7 +27,7 @@ export const createVehicle = catchAsyncErrors(async (req, res) => {
 });
 
 export const createVehicles = catchAsyncErrors(async (req, res) => {
-  const { vehicles } = req.body;
+  const vehicles = req.body;
 
   if (!Array.isArray(vehicles) || vehicles.length === 0) {
     throw Error("Please provide an array of vehicles");
@@ -32,9 +35,7 @@ export const createVehicles = catchAsyncErrors(async (req, res) => {
 
   // Add createdBy automatically if needed
 
-  const createdVehicles = await Vehicle.insertMany(vehicles, {
-    ordered: false,
-  });
+  const createdVehicles = await Vehicle.insertMany(vehicles);
 
   if (!createdVehicles)
     throw Error("Some error occurred creating vehicles, Try again!");
@@ -146,6 +147,29 @@ export const getVehicles = catchAsyncErrors(async (req, res) => {
       totalCount,
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit),
+    },
+    message: "Vehicles found successfully",
+  });
+});
+
+export const getAvailableVehicles = catchAsyncErrors(async (req, res) => {
+  console.log("getAvailableVehicles");
+  const query = {
+    routeId: null,
+  };
+
+  const vehicles = await Vehicle.find(query);
+  if (!vehicles) {
+    throw Error("Vehicles not found!", 404);
+  }
+
+  const totalCount = await Vehicle.countDocuments();
+
+  res.json({
+    success: true,
+    data: {
+      vehicles,
+      totalCount,
     },
     message: "Vehicles found successfully",
   });

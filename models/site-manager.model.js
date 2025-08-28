@@ -41,15 +41,26 @@ const SiteManagerSchema = new mongoose.Schema(
       ref: "TransportCompany",
       default: null,
     },
+    role: {
+      type: String,
+      default: "site-manager",
+    },
+    status: {
+      type: String,
+      enum: ["active", "suspended", "inactive"],
+    },
   },
   { timestamps: true }
 );
 
-
 SiteManagerSchema.methods.getSignedToken = function () {
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
-  });
+  return jwt.sign(
+    { id: this._id, role: "site_manager" },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_EXPIRES_IN,
+    }
+  );
 };
 
 SiteManagerSchema.methods.comparePassword = async function (password) {

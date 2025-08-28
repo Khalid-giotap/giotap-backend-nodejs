@@ -36,12 +36,25 @@ const AideSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Vehicle",
     },
+    isOnDuty:{
+      type:Boolean,
+      default:false
+    },
+    role:{
+      type: String,
+      default: "aide",
+    },
+    status:{
+      type: String,
+      enum:['active','inactive','suspended'],
+      default: "active",
+    }
   },
   { timestamps: true }
 );
 
 AideSchema.methods.getSignedToken = function () {
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: this._id, role: 'aide' }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };

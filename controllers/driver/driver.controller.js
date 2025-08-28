@@ -28,17 +28,15 @@ export const createDriver = catchAsyncErrors(async (req, res) => {
 });
 
 export const createDrivers = catchAsyncErrors(async (req, res) => {
-  const { drivers } = req.body;
-
+  const drivers = req.body;
+console.log(drivers)
   if (!Array.isArray(drivers) || drivers.length === 0) {
     throw Error("Please provide an array of drivers");
   }
 
   // Add createdBy automatically if needed
 
-  const createdDrivers = await Driver.insertMany(drivers, {
-    ordered: false,
-  });
+  const createdDrivers = await Driver.insertMany(drivers);
 
   if (!createdDrivers)
     throw Error("Some error occurred creating drivers, Try again!");
@@ -148,6 +146,23 @@ export const getDrivers = catchAsyncErrors(async (req, res, next) => {
       totalCount,
       totalPages: Math.ceil(totalCount / limit),
       currentPage: page,
+    },
+    message: "Drivers found successfully",
+  });
+});
+
+export const getAvailableDrivers = catchAsyncErrors(async (req, res, next) => {
+  const drivers = await Driver.find({
+    routeId: null,
+    vehicleId: null,
+  })
+
+  if (!drivers) throw Error("Invalid resource, drivers does not exist!", 404);
+  res.json({
+    success: true,
+    data: {
+      drivers,
+      totalCount,
     },
     message: "Drivers found successfully",
   });

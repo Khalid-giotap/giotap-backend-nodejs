@@ -26,6 +26,8 @@ import mechanicAuthRoutes from "./routes/mechanic/auth.route.js";
 import companyRoutes from "./routes/transport-company/company.route.js";
 import schoolRoutes from "./routes/school/school.route.js";
 import parentRoutes from "./routes/parent/parent.route.js";
+import parentAuthRoutes from "./routes/parent/auth.route.js";
+import studentRoutes from "./routes/student/student.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,9 +35,7 @@ const server = createServer(app);
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(",")
-    : ["http://localhost:3050", "http://localhost:3000"],
+  origin:["http://localhost:3050", "http://localhost:3001",'http://localhost:3000'],
   credentials: true,
   optionsSuccessStatus: 200,
 };
@@ -57,7 +57,7 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors(corsOptions));
 
-// todo 
+// todo
 // // Rate limiting
 // app.use("/api/v1/*/auth", authLimiter);
 // app.use("/api/v1", apiLimiter);
@@ -92,6 +92,10 @@ app.use("/api/v1/admin/school", schoolRoutes);
 
 // Parent
 app.use("/api/v1/admin/parent", parentRoutes);
+app.use("/api/v1/parent/auth", parentAuthRoutes);
+
+// Parent
+app.use("/api/v1/admin/student", studentRoutes);
 
 // Admin
 app.use("/api/v1/admin/auth", adminAuthRoutes);
@@ -111,13 +115,13 @@ app.get("/", (req, res) => {
 });
 
 // Socket.io connection handling
-io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+// io.on("connection", (socket) => {
+//   console.log("User connected:", socket.id);
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
-  });
-});
+//   socket.on("disconnect", () => {
+//     console.log("User disconnected:", socket.id);
+//   });
+// });
 
 // Error handling middleware
 app.use(errorHandler);

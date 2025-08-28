@@ -7,16 +7,16 @@ import {
   requestPasswordReset,
   aboutMe,
 } from "../../controllers/site-manager/auth.controller.js";
-import { isSiteManagerAuthenticated } from "../../middlewares/auth.middleware.js";
+import { isAuthenticated } from "../../middlewares/auth.middleware.js";
 const managerAuthRouter = express.Router();
 
 managerAuthRouter.post("/sign-in", signIn);
-managerAuthRouter.get("/me", isSiteManagerAuthenticated, aboutMe);
+managerAuthRouter.get("/me", isAuthenticated, aboutMe);
 managerAuthRouter.delete("/sign-out", signOut);
 
 managerAuthRouter.put(
   "/change-password",
-  isSiteManagerAuthenticated,
+  isAuthenticated,
   changePassword
 );
 

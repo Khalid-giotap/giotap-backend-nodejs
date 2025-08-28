@@ -35,16 +35,18 @@ export const signUp = catchAsyncErrors(async (req, res) => {
 
 export const signIn = catchAsyncErrors(async (req, res) => {
   const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-
+console.log(req.body)
   const { email, password } = req.body;
   let user = await Admin.findOne({ email }).select("+password");
+  console.log(user)
   if (!user) {
     const error = new Error("Invalid credentials!");
     error.statusCode = 401;
     throw error;
   }
-
+  
   const isPasswordMatch = await user.comparePassword(password);
+  console.log(isPasswordMatch)
 
   if (!isPasswordMatch) {
     const error = new Error("Invalid credentials!");
@@ -66,7 +68,7 @@ export const signIn = catchAsyncErrors(async (req, res) => {
   res
     .cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     })
@@ -74,7 +76,6 @@ export const signIn = catchAsyncErrors(async (req, res) => {
     .json({
       success: true,
       data: {
-        token,
         user,
       },
       message: "Signed in successfully!",

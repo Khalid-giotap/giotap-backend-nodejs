@@ -4,19 +4,63 @@ import {
   createVehicles,
   deleteVehicle,
   deleteVehicles,
+  getAvailableVehicles,
   getVehicle,
   getVehicles,
   updateVehicle,
 } from "../../controllers/vehicle/vehicle.controller.js";
+import { isAuthenticated } from "../../middlewares/auth.middleware.js";
+import { isRoleAuthorized } from "../../middlewares/role.middleware.js";
 
 const vehicleRouter = express.Router();
 
-vehicleRouter.post("/", createVehicle);
-vehicleRouter.post("/vehicles", createVehicles);
-vehicleRouter.get("/", getVehicles);
-vehicleRouter.get("/:id", getVehicle);
-vehicleRouter.delete("/:id", deleteVehicle);
-vehicleRouter.delete("/", deleteVehicles);
-vehicleRouter.put("/:id", updateVehicle);
+vehicleRouter.post(
+  "/",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  createVehicle
+);
+vehicleRouter.post(
+  "/vehicles",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  createVehicles
+);
+vehicleRouter.get(
+  "/",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  getVehicles
+);
+vehicleRouter.get(
+  "/available",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  getAvailableVehicles
+);
+vehicleRouter.get(
+  "/:id",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  getVehicle
+);
+vehicleRouter.delete(
+  "/:id",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  deleteVehicle
+);
+vehicleRouter.delete(
+  "/",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  deleteVehicles
+);
+vehicleRouter.put(
+  "/:id",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  updateVehicle
+);
 
 export default vehicleRouter;

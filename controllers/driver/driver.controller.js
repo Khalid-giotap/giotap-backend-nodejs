@@ -29,7 +29,7 @@ export const createDriver = catchAsyncErrors(async (req, res) => {
 
 export const createDrivers = catchAsyncErrors(async (req, res) => {
   const drivers = req.body;
-console.log(drivers)
+  console.log(drivers);
   if (!Array.isArray(drivers) || drivers.length === 0) {
     throw Error("Please provide an array of drivers");
   }
@@ -154,17 +154,20 @@ export const getDrivers = catchAsyncErrors(async (req, res, next) => {
 export const getAvailableDrivers = catchAsyncErrors(async (req, res, next) => {
   const drivers = await Driver.find({
     routeId: null,
-    vehicleId: null,
-  })
+    vehicleId: null
+  });
 
   if (!drivers) throw Error("Invalid resource, drivers does not exist!", 404);
+  
+  const totalCount = drivers.length;
+  
   res.json({
     success: true,
     data: {
       drivers,
       totalCount,
     },
-    message: "Drivers found successfully",
+    message: "Available drivers found successfully",
   });
 });
 

@@ -4,8 +4,10 @@ import {
   addSchools,
   getSchool,
   getSchools,
+  updateSchool,
   deleteSchool,
-  deleteSchools,getAvailableSchools
+  deleteSchools,
+  getAvailableSchools
 } from "../../controllers/school/school.controller.js";
 import { isAuthenticated } from "../../middlewares/auth.middleware.js";
 import { isRoleAuthorized } from "../../middlewares/role.middleware.js";
@@ -27,10 +29,32 @@ schoolRouter.post(
 );
 
 schoolRouter.get(
+  "/",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "site_manager", "transport-admin"]),
+  getSchools
+);
+
+schoolRouter.get(
   "/available",
   isAuthenticated,
   isRoleAuthorized(["super-admin", "site_manager", "transport-admin"]),
   getAvailableSchools
+);
+
+
+schoolRouter.put(
+  "/:id",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "site_manager", "transport-admin"]),
+  updateSchool
+);
+
+schoolRouter.delete(
+  "/",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin"]),
+  deleteSchools
 );
 
 schoolRouter.get(
@@ -43,18 +67,6 @@ schoolRouter.get(
     "transport-admin",
   ]),
   getSchool
-);
-schoolRouter.get(
-  "/",
-  isAuthenticated,
-  isRoleAuthorized(["super-admin", "site_manager", "transport-admin"]),
-  getSchools
-);
-schoolRouter.delete(
-  "/",
-  isAuthenticated,
-  isRoleAuthorized(["super-admin",]),
-  deleteSchools
 );
 schoolRouter.delete(
   "/:id",

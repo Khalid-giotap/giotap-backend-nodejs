@@ -1,4 +1,6 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
+import Aide from "../../models/aide.model.js";
+import Driver from "../../models/driver.model.js";
 import Route from "../../models/route.model.js";
 import School from "../../models/school.model.js";
 import Vehicle from "../../models/vehicle.model.js";
@@ -59,7 +61,11 @@ export const getRoute = catchAsyncErrors(async (req, res) => {
 
   if (!id) throw Error("Id is required to get the route!", 400);
 
-  const route = await Route.findById(id).populate("driverId").populate("vehicleId").populate("aideId").populate("schoolId");
+  const route = await Route.findById(id)
+    .populate("driverId")
+    .populate("vehicleId")
+    .populate("aideId")
+    .populate("schoolId");
 
   if (!route) throw Error("Invalid resource, route does not exist!", 404);
 
@@ -72,76 +78,47 @@ export const getRoute = catchAsyncErrors(async (req, res) => {
 
 export const updateRoute = catchAsyncErrors(async (req, res) => {
   const { id } = req.params; // from /:routeId
-  const { vehicle, driver,school } = req.query; // from ?vehicle=...&driver=...
-  if (vehicle && driver) {
-    const updatedVehicle = await Vehicle.findByIdAndUpdate(
-      vehicle,
-      {
-        id,
-      },
+  const { vehicleId, driverId, schoolId, aideId } = req.body; // from ?vehicle=...&driver=...
+  if (vehicleId) {
+    const vehicle = await Vehicle.findByIdAndUpdate(vehicleId, { routeId: id });
+    if (!vehicle) throw Error("Vehicle id is invalid!", 404);
+  }
+  
+  if (driverId) {
+    const driver = await Driver.findByIdAndUpdate(driverId, {
+      routeId: id,
+      vehicleId,
+    });
+    if (!driver) throw Error("Driver id is invalid!", 404);
+  }
+  if (schoolId) {
+    const school = await School.findById(schoolId);
+    if (!school) throw Error("School id is invalid!", 404);
+    school.routes.push(id);
+    await school.save();
+  }
+  if (aideId) {
+    const aide = await Aide.findByIdAndUpdate(
+      aideId,
+      { vehicleId: id },
       { new: true }
     );
-    const updatedRoute = await Route.findByIdAndUpdate(
-      id,
-      {
-        driverId: driver,
-        vehicleId: vehicle,
-      },
-      {
-        new: true,
-      }
-    );
+    console.log(aide);
+    if (!aide) throw Error("Aide id is invalid!", 404);
+  }
 
-    return res.status(200).json({
-      data: {
-        route: updatedRoute,
-        vehicle: updatedVehicle,
-      },
-      success: true,
-      message: "Route assigned successfully!",
-    });
-  }
-  if (school) {
-    const updatedSchool = await School.findByIdAndUpdate(
-      school,
-      {
-        routeId:id,
-      },
-      { new: true }
-    );
-    const updatedRoute = await Route.findByIdAndUpdate(
-      id,
-      {
-        schoolId: school,
-      },
-      {
-        new: true,
-      }
-    );
-
-    return res.status(200).json({
-      data: {
-        route: updatedRoute,
-        school: updatedSchool,
-      },
-      success: true,
-      message: "Route assigned successfully!",
-    });
-  }
-  if (id) {
-    const route = await Route.findByIdAndUpdate(
-      id,
-      { ...req.body },
-      { new: true }
-    );
-    return res.status(200).json({
-      data: {
-        route,
-      },
-      success: true,
-      message: "Route updated successfully!",
-    });
-  }
+  const route = await Route.findByIdAndUpdate(
+    id,
+    { ...req.body },
+    { new: true }
+  );
+  return res.status(200).json({
+    data: {
+      route,
+    },
+    success: true,
+    message: "Route updated successfully!",
+  });
 });
 
 export const deleteRoute = catchAsyncErrors(async (req, res) => {
@@ -159,7 +136,11 @@ export const deleteRoute = catchAsyncErrors(async (req, res) => {
 });
 
 export const getRoutes = catchAsyncErrors(async (req, res) => {
-  const routes = await Route.find().populate("driverId").populate("vehicleId").populate("aideId").populate("schoolId");
+  const routes = await Route.find()
+    .populate("driverId")
+    .populate("vehicleId")
+    .populate("aideId")
+    .populate("schoolId");
 
   if (!routes) {
     throw Error("Routes not found!", 404);

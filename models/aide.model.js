@@ -35,6 +35,7 @@ const AideSchema = new mongoose.Schema(
     vehicleId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Vehicle",
+      default:null
     },
     isOnDuty:{
       type:Boolean,

@@ -48,12 +48,12 @@ const SchoolSchema = new mongoose.Schema(
       maxlength: [500, "Description must be at most 500 characters long"],
       default: "No description provided",
     },
-    routeId: {
-      type: mongoose.Schema.Types.ObjectId,
+    routes: {
+      type: [mongoose.Schema.Types.ObjectId],
       ref: "Route",
-      default: null,
+      default: [],
     },
-    isActive: {
+    status: {
       type: String,
       enum: ["active", "inactive", "pending", "suspended"],
       default: "active",

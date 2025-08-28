@@ -9,6 +9,7 @@ if (!MONGODB_URI) {
 }
 
 export const dbConnect = async () => {
+  console.log("Connecting to database...", MONGODB_URI);
   try {
     const connectionOptions = {
       maxPoolSize: 10,

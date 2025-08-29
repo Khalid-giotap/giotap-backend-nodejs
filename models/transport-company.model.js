@@ -64,14 +64,7 @@ const transportCompanySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Subscription",
     },
-    billingAddress: {
-      address_line1: String,
-      address_line2: String,
-      city: String,
-      state: String,
-      postal_code: String,
-      country: String,
-    },
+   
   },
   { timestamps: true }
 );

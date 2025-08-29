@@ -28,6 +28,7 @@ import schoolRoutes from "./routes/school/school.route.js";
 import parentRoutes from "./routes/parent/parent.route.js";
 import parentAuthRoutes from "./routes/parent/auth.route.js";
 import studentRoutes from "./routes/student/student.route.js";
+import parkingLotRoutes from "./routes/parking-lot/lot.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -86,6 +87,7 @@ app.use("/api/v1/mechanic/auth", mechanicAuthRoutes);
 
 // Transport Company
 app.use("/api/v1/admin/company", companyRoutes);
+app.use("/api/v1/admin/parking-lot", parkingLotRoutes);
 
 // School
 app.use("/api/v1/admin/school", schoolRoutes);

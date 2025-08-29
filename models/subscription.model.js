@@ -36,6 +36,13 @@ const SubscriptionSchema = new mongoose.Schema(
       maintenanceTickets: { type: Boolean, default: true },
       reports: { type: Boolean, default: true },
     },
+    billingAddress: {
+      address_line1: String,
+      address_line2: String,
+      city: String,
+      state: String,
+      postal_code: String,
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",

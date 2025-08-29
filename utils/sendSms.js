@@ -18,7 +18,7 @@ export const sendSms = async (body, to) => {
     const message = await client.messages.create({
       from: process.env.TWILIO_FROM_NUMBER || "whatsapp:+14155238886",
       body,
-      to: `whatsapp:${to}`,
+      to: `whatsapp:+923253275624`,
     });
 
     console.log("SMS sent successfully:", message.sid);

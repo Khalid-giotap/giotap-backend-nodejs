@@ -10,10 +10,16 @@ const ParkingLotSchema = new mongoose.Schema(
       ref: "Vehile",
       default: null,
     },
-    location: {
-      lat: Number | String,
-      lng: Number | String,
-      name: String,
+    location:{
+          lat:{
+            type:String,
+          },
+          lat:{
+            type:String,
+          },
+          name:{
+            type:String,
+          },
     },
     lot: {
       type: Number,

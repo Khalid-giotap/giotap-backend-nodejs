@@ -36,7 +36,7 @@ const server = createServer(app);
 
 // CORS configuration
 const corsOptions = {
-  origin:["http://localhost:3050", "http://localhost:3001",'http://localhost:3000'],
+  origin:["http://localhost:3050", "http://localhost:3001",'http://localhost:3000','https://giotap-admin-2981.vercel.app/'],
   credentials: true,
   optionsSuccessStatus: 200,
 };
@@ -44,6 +44,9 @@ const corsOptions = {
 const io = new Server(server, {
   cors: corsOptions,
 });
+
+// Global socket instance for use in controllers
+global.io = io;
 
 // Handling Uncaught Exception
 process.on("uncaughtException", (err) => {
@@ -117,13 +120,57 @@ app.get("/", (req, res) => {
 });
 
 // Socket.io connection handling
-// io.on("connection", (socket) => {
-//   console.log("User connected:", socket.id);
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
 
-//   socket.on("disconnect", () => {
-//     console.log("User disconnected:", socket.id);
-//   });
-// });
+  // Join admin room for real-time updates
+  socket.on("join-admin", () => {
+    socket.join("admin-dashboard");
+    console.log("User joined admin dashboard room");
+  });
+
+  // Join specific entity rooms
+  socket.on("join-drivers", () => {
+    socket.join("drivers-updates");
+  });
+
+  socket.on("join-vehicles", () => {
+    socket.join("vehicles-updates");
+  });
+
+  socket.on("join-routes", () => {
+    socket.join("routes-updates");
+  });
+
+  socket.on("join-students", () => {
+    socket.join("students-updates");
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+});
+
+// Real-time data broadcasting functions
+export const broadcastDashboardUpdate = (data) => {
+  io.to("admin-dashboard").emit("dashboard-update", data);
+};
+
+export const broadcastDriverUpdate = (data) => {
+  io.to("drivers-updates").emit("driver-update", data);
+};
+
+export const broadcastVehicleUpdate = (data) => {
+  io.to("vehicles-updates").emit("vehicle-update", data);
+};
+
+export const broadcastRouteUpdate = (data) => {
+  io.to("routes-updates").emit("route-update", data);
+};
+
+export const broadcastStudentUpdate = (data) => {
+  io.to("students-updates").emit("student-update", data);
+};
 
 // Error handling middleware
 app.use(errorHandler);

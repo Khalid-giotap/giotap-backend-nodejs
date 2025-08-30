@@ -52,13 +52,14 @@ const errorHandler = (err, req, res, next) => {
         statusCode: error.statusCode,
       });
     }
-
+console.log('look here saad 55')
     res.status(error.statusCode || 500).json({
       success: false,
       message: error.message || "Internal Server Error",
       ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
     });
   } catch (error) {
+    console.log('lets see')
     next(error);
   }
 };

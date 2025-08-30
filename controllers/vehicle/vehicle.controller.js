@@ -17,6 +17,25 @@ export const createVehicle = catchAsyncErrors(async (req, res) => {
 
   if (!vehicle) throw Error("Error creating vehicle!", 400);
 
+  // Broadcast real-time update
+  if (global.io) {
+    global.io.to("vehicles-updates").emit("vehicle-update", {
+      type: "created",
+      vehicle,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Broadcast dashboard update
+    const totalVehicles = await Vehicle.countDocuments();
+    const activeVehicles = await Vehicle.countDocuments({ status: 'active' });
+    const maintenanceVehicles = await Vehicle.countDocuments({ status: 'maintenance' });
+    global.io.to("admin-dashboard").emit("dashboard-update", {
+      type: "vehicles",
+      data: { totalVehicles, activeVehicles, maintenanceVehicles },
+      timestamp: new Date().toISOString()
+    });
+  }
+
   res.status(201).json({
     success: true,
     data: {
@@ -77,6 +96,25 @@ export const updateVehicle = catchAsyncErrors(async (req, res) => {
 
   if (!vehicle) throw Error("Invalid resource, Vehicle does not exist!", 400);
 
+  // Broadcast real-time update
+  if (global.io) {
+    global.io.to("vehicles-updates").emit("vehicle-update", {
+      type: "updated",
+      vehicle,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Broadcast dashboard update
+    const totalVehicles = await Vehicle.countDocuments();
+    const activeVehicles = await Vehicle.countDocuments({ status: 'active' });
+    const maintenanceVehicles = await Vehicle.countDocuments({ status: 'maintenance' });
+    global.io.to("admin-dashboard").emit("dashboard-update", {
+      type: "vehicles",
+      data: { totalVehicles, activeVehicles, maintenanceVehicles },
+      timestamp: new Date().toISOString()
+    });
+  }
+
   const vehicles = await Vehicle.find();
   res.json({
     success: true,
@@ -97,6 +135,25 @@ export const deleteVehicle = catchAsyncErrors(async (req, res) => {
     { assignedVehicle: null }
   );
   await Route.findOneAndUpdate({ vehicleId: id }, { vehicleId: null });
+
+  // Broadcast real-time update
+  if (global.io) {
+    global.io.to("vehicles-updates").emit("vehicle-update", {
+      type: "deleted",
+      vehicleId: id,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Broadcast dashboard update
+    const totalVehicles = await Vehicle.countDocuments();
+    const activeVehicles = await Vehicle.countDocuments({ status: 'active' });
+    const maintenanceVehicles = await Vehicle.countDocuments({ status: 'maintenance' });
+    global.io.to("admin-dashboard").emit("dashboard-update", {
+      type: "vehicles",
+      data: { totalVehicles, activeVehicles, maintenanceVehicles },
+      timestamp: new Date().toISOString()
+    });
+  }
 
   res.json({
     success: true,

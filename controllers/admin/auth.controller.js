@@ -35,18 +35,18 @@ export const signUp = catchAsyncErrors(async (req, res) => {
 
 export const signIn = catchAsyncErrors(async (req, res) => {
   const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-console.log(req.body)
+  console.log(req.body);
   const { email, password } = req.body;
   let user = await Admin.findOne({ email }).select("+password");
-  console.log(user)
+  console.log(user);
   if (!user) {
     const error = new Error("Invalid credentials!");
     error.statusCode = 401;
     throw error;
   }
-  
+
   const isPasswordMatch = await user.comparePassword(password);
-  console.log(isPasswordMatch)
+  console.log(isPasswordMatch);
 
   if (!isPasswordMatch) {
     const error = new Error("Invalid credentials!");
@@ -55,20 +55,12 @@ console.log(req.body)
   }
 
   const token = user.getSignedToken();
-  
-  // Send notifications asynchronously
-  try {
-    await sendEmail(user.email, "Login Alert", alertWelcome(user.fullName));
-    await sendSms("Login Alert: You logged in successfully!", user.phone);
-  } catch (notificationError) {
-    // Log but don't fail the login
-    console.error("Notification sending failed:", notificationError.message);
-  }
+  console.log("token", token);
+  sendEmail(user.email, "Login Alert", alertWelcome(user.fullName));
 
-  res
+  return res
     .cookie("token", token, {
       httpOnly: true,
-      secure: true,
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     })
@@ -88,7 +80,7 @@ export const aboutMe = catchAsyncErrors(async (req, res) => {
     error.statusCode = 401;
     throw error;
   }
-  
+
   return res.status(200).json({
     success: true,
     data: { user: req.user },
@@ -100,7 +92,7 @@ export const signOut = catchAsyncErrors(async (req, res) => {
   res
     .clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
     })
     .status(200)
@@ -113,7 +105,7 @@ export const signOut = catchAsyncErrors(async (req, res) => {
 
 export const changePassword = catchAsyncErrors(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  
+
   if (!oldPassword) {
     const error = new Error("Old password is required!");
     error.statusCode = 400;
@@ -144,14 +136,11 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
   user.password = newPassword;
   await user.save();
 
-  res
-    .clearCookie("token")
-    .status(200)
-    .json({
-      success: true,
-      data: { user },
-      message: "Password changed, you are signed out!",
-    });
+  res.clearCookie("token").status(200).json({
+    success: true,
+    data: { user },
+    message: "Password changed, you are signed out!",
+  });
 });
 
 export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
@@ -172,7 +161,11 @@ export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
 
   // Send email to user
   try {
-    await sendEmail(email, "Password Reset", `Reset your password: ${process.env.FRONTEND_URL}/reset-password?token=${token}`);
+    await sendEmail(
+      email,
+      "Password Reset",
+      `Reset your password: ${process.env.FRONTEND_URL}/reset-password?token=${token}`
+    );
   } catch (emailError) {
     console.error("Password reset email failed:", emailError.message);
   }

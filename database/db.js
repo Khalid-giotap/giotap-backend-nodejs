@@ -17,8 +17,8 @@ export const dbConnect = async () => {
       socketTimeoutMS: 45000,
     };
 
-    await mongoose.connect('mongodb+srv://saad:giotap-2392@cluster0.x6lofvt.mongodb.net/giotap', connectionOptions);
-    // await mongoose.connect(MONGODB_URI, connectionOptions);
+    // await mongoose.connect('mongodb+srv://saad:giotap-2392@cluster0.x6lofvt.mongodb.net/giotap', connectionOptions);
+    await mongoose.connect(MONGODB_URI, connectionOptions);
 
     console.log("Database connected successfully to", mongoose.connection.host);
 

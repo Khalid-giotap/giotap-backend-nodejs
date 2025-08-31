@@ -36,7 +36,7 @@ const server = createServer(app);
 
 // CORS configuration
 const corsOptions = {
-  origin:["http://localhost:3050", "http://localhost:3001",'http://localhost:3000','https://giotap-admin-2981.vercel.app/'],
+	origin:["http://localhost:3050", "http://localhost:3001",'http://localhost:3000','https://giotap-admin-2981.vercel.app'],
   credentials: true,
   optionsSuccessStatus: 200,
 };

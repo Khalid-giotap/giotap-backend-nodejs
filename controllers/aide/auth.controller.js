@@ -19,7 +19,7 @@ export const signIn = catchAsyncErrors(async (req, res) => {
     .cookie("token", token, {
       httpOnly: true,
       secure: true,
-      sameSite: "strict",
+      sameSite: "none",
       maxAge: 24 * 60 * 60 * 1000,
     })
     .json({
@@ -44,7 +44,7 @@ export const signOut = catchAsyncErrors(async (req, res) => {
     .clearCookie("token", {
       httpOnly: true, // same as when cookie was set
       secure: true, // same as when cookie was set
-      sameSite: "strict", // same as when cookie was set
+      sameSite: "none", // same as when cookie was set
     })
     .status(200)
     .json({
@@ -69,7 +69,7 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
       .clearCookie("token", {
         httpOnly: true,
         secure: true,
-        sameSite: "strict",
+        sameSite: "none",
       })
       .json({
         success: false,
@@ -88,7 +88,7 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
     .clearCookie("token", {
       httpOnly: true,
       secure: true,
-      sameSite: "strict",
+      sameSite: "none",
     })
     .status(200)
     .json({

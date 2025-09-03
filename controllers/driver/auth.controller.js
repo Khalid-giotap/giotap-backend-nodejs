@@ -5,7 +5,7 @@ import PasswordReset from "../../models/password-reset.model.js";
 
 export const signIn = catchAsyncErrors(async (req, res) => {
   const { email, password } = req.body;
-
+console.log('called',req.body)
   const user = await Driver.findOne({ email }).select("+password");
   if (!user) {
     throw Error("Invalid credentials!", 400);
@@ -17,7 +17,7 @@ export const signIn = catchAsyncErrors(async (req, res) => {
   }
 
   const token = user.getSignedToken();
-  res
+res
     .cookie("token", token, {
       httpOnly: true,
       secure: true,

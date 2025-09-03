@@ -1,9 +1,12 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
-import ParkingLot from "../../models/parking-lot.js";
+import ParkingLot from "../../models/parking-lot.model.js";
 import { createError } from "../../utils/error.js";
 
 export const createParkingLot = catchAsyncErrors(async (req, res, next) => {
-  const parkingLot = await ParkingLot.create(req.body);
+  const parkingLot = await ParkingLot.create({
+    ...req.body,
+    isEmpty: req.body.vehicleId ? true : false,
+  });
 
   res.status(201).json({
     success: true,
@@ -11,6 +14,32 @@ export const createParkingLot = catchAsyncErrors(async (req, res, next) => {
       lot: parkingLot,
     },
     message: "Parking lot created successfully",
+  });
+});
+export const createParkingLots = catchAsyncErrors(async (req, res) => {
+  const lots = req.body;
+
+  if (!Array.isArray(lots) || lots.length === 0) {
+    return res.status(400).json({ error: "Please provide an array of lots" });
+  }
+
+  // Add createdBy automatically if needed
+  const lotsToInsert = lots.map((c) => ({
+    ...c,
+    createdBy: req.user._id,
+    isEmpty: c.vehicleId ? true : false,
+  }));
+
+  const createdLots = await ParkingLot.insertMany(lotsToInsert);
+
+  if (!createdLots) throw Error("Some error adding schools, Try again!");
+
+  res.status(201).json({
+    success: true,
+    data: {
+      lots: createdLots,
+    },
+    message: "Lots created successfully",
   });
 });
 
@@ -55,7 +84,7 @@ export const getParkingLot = catchAsyncErrors(async (req, res, next) => {
 
 export const getEmptyParkingLots = catchAsyncErrors(async (req, res, next) => {
   const parkingLots = await ParkingLot.find({
-    $or: [{ vehicleId: null }, { isEmtpy: true }],
+    $or: [{ vehicleId: null }, { isEmpty: true }],
   });
 
   if (!parkingLots) {
@@ -73,6 +102,9 @@ export const getEmptyParkingLots = catchAsyncErrors(async (req, res, next) => {
 
 export const updateParkingLot = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
+  if (req.body.vehicleId) {
+    req.body.isEmpty = true;
+  }
   const parkingLot = await ParkingLot.findByIdAndUpdate(id, req.body, {
     new: true,
     populate: {

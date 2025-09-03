@@ -9,10 +9,10 @@ export const createCompany = catchAsyncErrors(async (req, res) => {
   let company = await TransportCompany.findOne({ name: req.body.name });
 
   if (company) throw Error("Company already exists!", 400);
-
+  console.log(req.user._id);
   company = await TransportCompany.create({
     ...req.body,
-    createdBy: req.user.id,
+    createdBy: req.user._id,
   });
 
   console.log(company);
@@ -27,18 +27,17 @@ export const createCompany = catchAsyncErrors(async (req, res) => {
 });
 
 export const createCompanies = catchAsyncErrors(async (req, res) => {
-  const { companies } = req.body;
-
+  const companies = req.body;
+console.log(companies)
   if (!Array.isArray(companies) || companies.length === 0) {
-    return res
-      .status(400)
-      .json({ error: "Please provide an array of companies" });
+    console.log('here')
+    throw Error("Please provide an array of companies");
   }
 
   // Add createdBy automatically if needed
   const companiesToInsert = companies.map((c) => ({
     ...c,
-    createdBy: req.user.id,
+    createdBy: req.user._id,
   }));
 
   const createdCompanies = await TransportCompany.insertMany(
@@ -65,21 +64,30 @@ export const createCompanies = catchAsyncErrors(async (req, res) => {
 });
 
 export const getCompanies = catchAsyncErrors(async (req, res) => {
-  const { page = 1, limit = 10, search = "", status = "active" } = req.query;
+  const { page = 1, limit = 10, search = "", status = "" } = req.query;
 
+  console.log(req.query)
   const query = {
     name: { $regex: search, $options: "i" },
     status,
   };
 
-  const companies = await TransportCompany.find(query)
+  const companies = await TransportCompany.find()
     .populate("createdBy", {
       fullName: 1,
       email: 1,
     })
+    .populate({
+      path: "schools",
+      select: "name email phone phone location",
+    })
+    .populate({
+      path: "vehicles",
+      select: "plateNumber model capacity status currentLocation",
+    })
     .skip((page - 1) * limit)
     .limit(limit);
-
+console.log(companies)
   const totalCount = await TransportCompany.countDocuments(query);
 
   res.status(200).json({
@@ -98,17 +106,22 @@ export const getCompany = catchAsyncErrors(async (req, res) => {
   // Response: { company: {...}, schools: [...], vehicles: [...] }
   // Populate: Associated schools and vehicles
   const { id } = req.params;
-  const company = await TransportCompany.findById(id).populate("createdBy", {
-    fullName: 1,
-    email: 1,
-  });
+  const company = await TransportCompany.findById(id)
+    .populate("createdBy", {
+      fullName: 1,
+      email: 1,
+    })
+    .populate({
+      path: "schools",
+      select: "name email phone location noOfStudents",
+    })
+    .populate({
+      path: "vehicles",
+      select: "plateNumber model capacity status currentLocation",
+    });
 
   console.log(company);
   if (!company) throw Error("Company not found!", 404);
-  const vehicles = await Vehicle.find({ company: id });
-  const schools = await School.find({ company: id });
-  company.vehicles = vehicles;
-  company.schools = schools;
 
   res.status(200).json({
     success: true,
@@ -119,7 +132,7 @@ export const getCompany = catchAsyncErrors(async (req, res) => {
 
 export const updateCompany = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
-  const { name, address, phone, email, status, schoolId, vehicleId } = req.body;
+  const { name, address, phone, email, status } = req.body;
 
   // Create update object with only provided fields
   const updateFields = {};
@@ -134,27 +147,12 @@ export const updateCompany = catchAsyncErrors(async (req, res) => {
     new: true,
     runValidators: true,
   });
-
   if (!company) {
     return res.status(404).json({
       success: false,
       message: "Company not found!",
     });
   }
-
-  // Handle school and vehicle associations if provided
-  if (schoolId) {
-    if (!company.schools.includes(schoolId)) {
-      company.schools.push(schoolId);
-    }
-  }
-
-  if (vehicleId) {
-    if (!company.vehicles.includes(vehicleId)) {
-      company.vehicles.push(vehicleId);
-    }
-  }
-
   await company.save();
 
   res.status(200).json({
@@ -172,7 +170,7 @@ export const deleteCompany = catchAsyncErrors(async (req, res) => {
     { transportCompanyId: id },
     { transportCompanyId: null }
   );
-  
+
   await SiteManager.findOneAndUpdate(
     { transportCompanyId: id },
     { transportCompanyId: null }

@@ -6,7 +6,7 @@ import {
   getRoutes,
   updateRoute,
   deleteRoutes,
-  createRoutes,
+  createRoutes,getAvailableRoutes
 } from "../../controllers/route/route.controller.js";
 import { isAuthenticated } from "../../middlewares/auth.middleware.js";
 import { isRoleAuthorized } from "../../middlewares/role.middleware.js";
@@ -15,13 +15,11 @@ const routeRouter = express.Router();
 
 routeRouter.post(
   "/",
-  // isAuthenticated,
-  // isRoleAuthorized([
-  //   "super-admin",
-  //   "transport-admin",
-  //   "school-admin",
-  //   "site_manager",
-  // ]),
+  isAuthenticated,
+  isRoleAuthorized([
+    "super-admin",
+    "transport-admin",
+  ]),
   createRoute
 );
 routeRouter.post(
@@ -29,9 +27,7 @@ routeRouter.post(
   isAuthenticated,
   isRoleAuthorized([
     "super-admin",
-    "transport-admin",
-    "school-admin",
-    "site_manager",
+    "transport-admin"
   ]),
   createRoutes
 );
@@ -46,6 +42,15 @@ routeRouter.get(
     "site_manager",
   ]),
   getRoutes
+);
+routeRouter.get(
+  "/available",
+  isAuthenticated,
+  isRoleAuthorized([
+    "super-admin",
+    "transport-admin",
+  ]),
+  getAvailableRoutes
 );
 routeRouter.get(
   "/:id",

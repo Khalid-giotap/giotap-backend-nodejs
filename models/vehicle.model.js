@@ -43,6 +43,9 @@ const VehicleSchema = new mongoose.Schema(
       trim: true,
       maxlength: [300, "Note must be at most 300 characters long"],
     },
+    lot: {
+      type: mongoose.Schema.Types.ObjectId,
+    },
     currentLocation: {
       lat: {
         type: Number,

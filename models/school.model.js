@@ -62,10 +62,10 @@ const SchoolSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    createdBy: {
+    admin: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
-      required: true,
+      default: null,
     },
   },
   { timestamps: true }

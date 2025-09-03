@@ -34,6 +34,7 @@ export const signUp = catchAsyncErrors(async (req, res) => {
 });
 
 export const signIn = catchAsyncErrors(async (req, res) => {
+  console.log(req.body)
   const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
   console.log(req.body);
   const { email, password } = req.body;

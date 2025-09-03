@@ -1,12 +1,14 @@
 import express from "express";
 import {
   createParkingLot,
+  createParkingLots,
   getParkingLots,
   getEmptyParkingLots,
   getParkingLot,
   updateParkingLot,
   deleteParkingLot,
   deleteParkingLots,
+
 } from "../../controllers/parking-lot/lot.controller.js";
 import { isAuthenticated } from "../../middlewares/auth.middleware.js";
 import { isRoleAuthorized } from "../../middlewares/role.middleware.js";
@@ -18,6 +20,13 @@ lotRouter.post(
   isRoleAuthorized(["super-admin", "transport-admin", "site-manager"]),
   createParkingLot
 );
+lotRouter.post(
+  "/lots",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site-manager"]),
+  createParkingLots
+);
+
 lotRouter.get(
   "/",
   isAuthenticated,

@@ -7,25 +7,26 @@ const ParkingLotSchema = new mongoose.Schema(
     },
     vehicleId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Vehile",
+      ref: "Vehicle",
       default: null,
     },
-    location:{
-          lat:{
-            type:String,
-          },
-          lat:{
-            type:String,
-          },
-          name:{
-            type:String,
-          },
+    location: {
+      lat: {
+        type: String,
+      },
+      lng: {
+        type: String,
+      },
+      name: {
+        type: String,
+      },
     },
     lot: {
-      type: Number,
+      type: String,
+      unique: true,
       required: true,
     },
-    isEmtpy: {
+    isEmpty: {
       type: Boolean,
       default: true,
     },

@@ -31,11 +31,6 @@ const SiteManagerSchema = new mongoose.Schema(
       minlength: [6, "Password must be at least 6 characters long"],
       select: false, // Exclude password from query results by default
     },
-    assignedSchool: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "School",
-      default: null,
-    },
     transportCompanyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "TransportCompany",

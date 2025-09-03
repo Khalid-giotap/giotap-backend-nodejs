@@ -47,7 +47,6 @@ const AdminSchema = new mongoose.Schema(
       ref: "School",
       default: null,
     },
-
     status: {
       type: String,
       enum: ["pending", "active", "inactive","suspended"],

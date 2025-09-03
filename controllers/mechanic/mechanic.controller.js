@@ -76,16 +76,30 @@ export const getMechanic = catchAsyncErrors(async (req, res) => {
   });
 });
 
+export const getAvailableMechanics = catchAsyncErrors(async (req, res) => {
+  console.log('called here')
+  const mechanics = await Mechanic.find({ assignedVehicle: null });
+
+  if (!mechanics) throw Error("Invalid resource, mechanic does not exist!");
+  console.log(mechanics);
+
+  res.status(201).json({
+    success: true,
+    data: { mechanics },
+    message: "Mechanics found successfully!",
+  });
+});
+
 export const updateMechanic = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
 
   if (!id) throw Error("Id is required to find the mechanic!");
 
-  delete req.body['password']
+  delete req.body["password"];
   const mechanic = await Mechanic.findByIdAndUpdate(id, req.body, {
     new: true,
     runValidators: true,
-  })
+  });
   if (!mechanic) throw Error("Invalid resource, mechanic does not exist!");
 
   console.log(mechanic);

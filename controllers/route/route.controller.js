@@ -75,6 +75,25 @@ export const getRoute = catchAsyncErrors(async (req, res) => {
     message: "Route found successfully",
   });
 });
+export const getAvailableRoutes = catchAsyncErrors(async (req, res) => {
+
+  const routes = await Route.find({
+    $or: [
+      { driverId: null },
+      { vehicleId: null },
+      { aideId: null },
+      { schoolId: null },
+    ],
+  })
+
+  if (!routes) throw Error("No available routes found!", 404);
+
+  res.json({
+    success: true,
+    data: { routes },
+    message: "Route found successfully",
+  });
+});
 
 export const updateRoute = catchAsyncErrors(async (req, res) => {
   const { id } = req.params; // from /:routeId
@@ -83,7 +102,7 @@ export const updateRoute = catchAsyncErrors(async (req, res) => {
     const vehicle = await Vehicle.findByIdAndUpdate(vehicleId, { routeId: id });
     if (!vehicle) throw Error("Vehicle id is invalid!", 404);
   }
-  
+
   if (driverId) {
     const driver = await Driver.findByIdAndUpdate(driverId, {
       routeId: id,

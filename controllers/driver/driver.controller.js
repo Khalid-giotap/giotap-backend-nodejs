@@ -23,16 +23,16 @@ export const createDriver = catchAsyncErrors(async (req, res) => {
     global.io.to("drivers-updates").emit("driver-update", {
       type: "created",
       driver,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     // Broadcast dashboard update
     const totalDrivers = await Driver.countDocuments();
     const activeDrivers = await Driver.countDocuments({ isOnDuty: true });
     global.io.to("admin-dashboard").emit("dashboard-update", {
       type: "drivers",
       data: { totalDrivers, activeDrivers },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -126,16 +126,16 @@ export const updateDriver = catchAsyncErrors(async (req, res, next) => {
     global.io.to("drivers-updates").emit("driver-update", {
       type: "updated",
       driver: updatedDriver,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     // Broadcast dashboard update
     const totalDrivers = await Driver.countDocuments();
     const activeDrivers = await Driver.countDocuments({ isOnDuty: true });
     global.io.to("admin-dashboard").emit("dashboard-update", {
       type: "drivers",
       data: { totalDrivers, activeDrivers },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -154,22 +154,22 @@ export const deleteDriver = catchAsyncErrors(async (req, res, next) => {
   if (!driver) throw Error("Invalid resource, driver does not exist!", 404);
 
   await Route.findOneAndUpdate({ driverId: id }, { driverId: null });
-  
+
   // Broadcast real-time update
   if (global.io) {
     global.io.to("drivers-updates").emit("driver-update", {
       type: "deleted",
       driverId: id,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     // Broadcast dashboard update
     const totalDrivers = await Driver.countDocuments();
     const activeDrivers = await Driver.countDocuments({ isOnDuty: true });
     global.io.to("admin-dashboard").emit("dashboard-update", {
       type: "drivers",
       data: { totalDrivers, activeDrivers },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -187,8 +187,8 @@ export const getDrivers = catchAsyncErrors(async (req, res, next) => {
   const drivers = await Driver.find({
     $or: [{ name: { $regex: search, $options: "i" } }, { isOnDuty: onDuty }],
   })
-    .populate("vehicleId")
-    .populate("routeId")
+    .populate("vehicleId", "plateNumber model capacity")
+    .populate("routeId", "name stops startLocation endLocation")
     .skip((page - 1) * limit)
     .limit(limit);
 
@@ -209,13 +209,13 @@ export const getDrivers = catchAsyncErrors(async (req, res, next) => {
 export const getAvailableDrivers = catchAsyncErrors(async (req, res, next) => {
   const drivers = await Driver.find({
     routeId: null,
-    vehicleId: null
+    vehicleId: null,
   });
 
   if (!drivers) throw Error("Invalid resource, drivers does not exist!", 404);
-  
+
   const totalCount = drivers.length;
-  
+
   res.json({
     success: true,
     data: {

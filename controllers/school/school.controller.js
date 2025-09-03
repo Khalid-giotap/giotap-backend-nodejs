@@ -35,7 +35,7 @@ export const addSchools = catchAsyncErrors(async (req, res) => {
   // Add createdBy automatically if needed
   const schoolsToInsert = schools.map((c) => ({
     ...c,
-    createdBy: req.user._id,
+    admin : c.admin ? c.admin : null,
     routes: c.routes || [],
   }));
 
@@ -170,7 +170,7 @@ export const getSchools = catchAsyncErrors(async (req, res) => {
         }
       ]
     })
-    .populate("createdBy", "fullName email")
+    .populate("admin", "fullName email")
     .skip((page - 1) * limit)
     .limit(parseInt(limit));
 

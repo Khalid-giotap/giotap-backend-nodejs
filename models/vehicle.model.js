@@ -33,6 +33,11 @@ const VehicleSchema = new mongoose.Schema(
       ref: "Route",
       default: null,
     },
+    transportCompanyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "TransportCompany",
+      default: null,
+    },
     status: {
       type: String,
       enum: ["active", "inactive", "maintenance"],
@@ -77,6 +82,12 @@ const VehicleSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Add performance indexes (plateNumber already has unique index)
+VehicleSchema.index({ status: 1 });
+VehicleSchema.index({ transportCompanyId: 1 });
+VehicleSchema.index({ routeId: 1 });
+VehicleSchema.index({ transportCompanyId: 1, status: 1 });
 
 const Vehicle = mongoose.model("Vehicle", VehicleSchema);
 

@@ -6,16 +6,34 @@ import School from "../../models/school.model.js";
 import Vehicle from "../../models/vehicle.model.js";
 
 export const createRoute = catchAsyncErrors(async (req, res) => {
-  console.log(req.body);
-  const { name, startLocation, endLocation, stops } = req.body;
+  const { name, startLocation, endLocation, stops, transportCompanyId } =
+    req.body;
   if (!name || !startLocation || !endLocation) {
     throw Error("All fields are required!", 400);
   }
 
-  const existingRoute = await Route.findOne({ name });
+  const existingRouteQuery = { name };
+
+  // Only filter by transportCompanyId for transport-admin, super-admin sees all data
+  if (req.user.role === "transport-admin") {
+    existingRouteQuery.transportCompanyId = req.user.transportCompanyId;
+  }
+
+  const existingRoute = await Route.findOne(existingRouteQuery);
+
   if (existingRoute) throw Error("Route already exist with same name!");
 
-  const route = await Route.create({ name, startLocation, stops, endLocation });
+  const route = await Route.create({
+    name,
+    startLocation,
+    stops,
+    endLocation,
+    ...req.body,
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user.transportCompanyId
+        : transportCompanyId,
+  });
 
   if (!route) {
     throw Error("Error creating Route!", 400);
@@ -31,14 +49,21 @@ export const createRoute = catchAsyncErrors(async (req, res) => {
 
 export const createRoutes = catchAsyncErrors(async (req, res) => {
   const routes = req.body;
-  console.log(routes);
   if (!Array.isArray(routes) || routes.length === 0) {
     throw Error("Please provide an array of routes");
   }
 
-  // Add createdBy automatically if needed
-
-  const createdRoutes = await Route.insertMany(routes);
+  // Add transportCompanyId automatically if needed
+  const newRoutes = routes.map((route) => {
+    return {
+      ...route,
+      transportCompanyId:
+        req.user.role === "transport-admin"
+          ? req.user._id
+          : route.transportCompanyId,
+    };
+  });
+  const createdRoutes = await Route.insertMany(newRoutes);
 
   if (!createdRoutes)
     throw Error("Some error occurred creating routes, Try again!");
@@ -76,15 +101,21 @@ export const getRoute = catchAsyncErrors(async (req, res) => {
   });
 });
 export const getAvailableRoutes = catchAsyncErrors(async (req, res) => {
-
-  const routes = await Route.find({
+  const query = {
     $or: [
       { driverId: null },
       { vehicleId: null },
       { aideId: null },
       { schoolId: null },
     ],
-  })
+  };
+
+  // Only filter by transportCompanyId for transport-admin, super-admin sees all data
+  if (req.user.role === "transport-admin") {
+    query.transportCompanyId = req.user._id;
+  }
+
+  const routes = await Route.find(query);
 
   if (!routes) throw Error("No available routes found!", 404);
 
@@ -122,7 +153,6 @@ export const updateRoute = catchAsyncErrors(async (req, res) => {
       { vehicleId: id },
       { new: true }
     );
-    console.log(aide);
     if (!aide) throw Error("Aide id is invalid!", 404);
   }
 
@@ -144,7 +174,14 @@ export const deleteRoute = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
   if (!id) throw Error("Id is required to delete route!", 400);
 
-  const route = await Route.findByIdAndDelete(id);
+  const deleteQuery = { _id: id };
+
+  // Only filter by transportCompanyId for transport-admin, super-admin sees all data
+  if (req.user.role === "transport-admin") {
+    deleteQuery.transportCompanyId = req.user._id;
+  }
+
+  const route = await Route.findOneAndDelete(deleteQuery);
   if (!route) throw Error("Invalid resource, route does not exist!", 404);
 
   res.json({
@@ -155,7 +192,14 @@ export const deleteRoute = catchAsyncErrors(async (req, res) => {
 });
 
 export const getRoutes = catchAsyncErrors(async (req, res) => {
-  const routes = await Route.find()
+  const query = {};
+
+  // Only filter by transportCompanyId for transport-admin, super-admin sees all data
+  if (req.user.role === "transport-admin") {
+    query.transportCompanyId = req.user._id;
+  }
+
+  const routes = await Route.find(query)
     .populate("driverId")
     .populate("vehicleId")
     .populate("aideId")
@@ -164,7 +208,6 @@ export const getRoutes = catchAsyncErrors(async (req, res) => {
   if (!routes) {
     throw Error("Routes not found!", 404);
   }
-  console.log(routes);
   res.json({
     success: true,
     data: { routes },
@@ -173,7 +216,14 @@ export const getRoutes = catchAsyncErrors(async (req, res) => {
 });
 
 export const deleteRoutes = catchAsyncErrors(async (req, res) => {
-  const routes = await Route.deleteMany();
+  const query = {};
+
+  // Only filter by transportCompanyId for transport-admin, super-admin sees all data
+  if (req.user.role === "transport-admin") {
+    query.transportCompanyId = req.user._id;
+  }
+
+  const routes = await Route.deleteMany(query);
   if (!routes) throw Error("Routes not found!", 404);
 
   res.json({

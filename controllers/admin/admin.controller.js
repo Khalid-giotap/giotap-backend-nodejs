@@ -6,14 +6,13 @@ import School from "../../models/school.model.js";
 
 export const createAdmin = catchAsyncErrors(async (req, res) => {
   const { email, phone } = req.body;
-  console.log("createAdmin");
+  
   let admin = await Admin.findOne({ $or: [{ email }, { phone }] });
 
   if (admin) throw Error("Admin already exist with same phone or email", 400);
 
   admin = await Admin.create({ ...req.body });
   if (!admin) throw Error("Error creating admin, Try again!", 400);
-  console.log(admin);
   res.status(201).json({
     success: true,
     data: {
@@ -24,7 +23,6 @@ export const createAdmin = catchAsyncErrors(async (req, res) => {
 });
 
 export const createAdmins = catchAsyncErrors(async (req, res) => {
-  // console.log('body he re',req.body)
   const admins = req.body;
 
   if (!Array.isArray(admins) || admins.length === 0)
@@ -35,7 +33,6 @@ export const createAdmins = catchAsyncErrors(async (req, res) => {
     ordered: false,
   });
 
-  console.log(createdAdmins);
   if (!createdAdmins)
     throw Error("Some error occurred creating admins, Try again!");
 
@@ -54,7 +51,6 @@ export const createAdmins = catchAsyncErrors(async (req, res) => {
 
 export const getAdmin = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
-  console.log("we are at getAdmin", id);
   if (!id) throw Error("Id is required to get admin!", 400);
   const admin = await Admin.findById(id);
   if (!admin) throw Error("Invalid resource, admin does not exist!", 404);
@@ -96,7 +92,6 @@ export const updateAdmin = catchAsyncErrors(async (req, res) => {
       400
     );
   const admin = await Admin.findByIdAndUpdate(id, req.body, { new: true });
-  console.log(req.body);
   if (transportCompanyId) {
 
     if (admin.schoolId !== null) {
@@ -111,7 +106,6 @@ export const updateAdmin = catchAsyncErrors(async (req, res) => {
   }
 
   if (schoolId) {
-    console.log("here2", admin);
     if (admin.schoolId !== null) {
       await School.findByIdAndUpdate(admin.schoolId, {
         admin: null,

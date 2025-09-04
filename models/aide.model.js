@@ -35,27 +35,32 @@ const AideSchema = new mongoose.Schema(
     vehicleId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Vehicle",
-      default:null
+      default: null,
     },
-    isOnDuty:{
-      type:Boolean,
-      default:false
+    isOnDuty: {
+      type: Boolean,
+      default: false,
     },
-    role:{
+    role: {
       type: String,
       default: "aide",
     },
-    status:{
+    status: {
       type: String,
-      enum:['active','inactive','suspended'],
+      enum: ["active", "inactive", "suspended"],
       default: "active",
-    }
+    },
+    transportCompanyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "TransportCompany",
+      default: null,
+    },
   },
   { timestamps: true }
 );
 
 AideSchema.methods.getSignedToken = function () {
-  return jwt.sign({ id: this._id, role: 'aide' }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: this._id, role: "aide" }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };
@@ -74,6 +79,7 @@ AideSchema.pre("save", async function (next) {
 });
 
 AideSchema.index({ email: 1, phone: 1 }, { unique: true });
+
 const Aide = mongoose.model("Aide", AideSchema);
 
 export default Aide;

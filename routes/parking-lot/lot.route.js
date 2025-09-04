@@ -7,8 +7,7 @@ import {
   getParkingLot,
   updateParkingLot,
   deleteParkingLot,
-  deleteParkingLots,
-
+  deleteParkingLots
 } from "../../controllers/parking-lot/lot.controller.js";
 import { isAuthenticated } from "../../middlewares/auth.middleware.js";
 import { isRoleAuthorized } from "../../middlewares/role.middleware.js";
@@ -57,7 +56,8 @@ lotRouter.put(
   isRoleAuthorized(["super-admin", "transport-admin", "site-manager"]),
   updateParkingLot
 );
-lotRouter.delete("/:id",
+lotRouter.delete(
+  "/:id",
   isAuthenticated,
   isRoleAuthorized(["super-admin", "transport-admin", "site-manager"]),
   deleteParkingLot

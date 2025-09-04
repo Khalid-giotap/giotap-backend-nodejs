@@ -50,7 +50,6 @@ export const aboutMe = catchAsyncErrors(async (req, res) => {
   if (!req.user) throw Error("You are not Authorized!", 400);
 
   const user = await SiteManager.findById(req.user.id);
-  console.log(user);
   res.json({
     success: true,
     data: { user },
@@ -105,6 +104,12 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
 export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
   const { email } = req.body;
   if (!email) throw Error("Email is required");
+  const user = await SiteManager.findOne({ email });
+  if (!user) {
+    const error = new Error("Invalid email account not found!");
+    error.statusCode = 404;
+    throw error;
+  }
   const token = jwt.sign({ email }, process.env.JWT_SECRET, {
     expiresIn: "10m",
   });
@@ -115,7 +120,6 @@ export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
     expiresAt: expires,
   });
 
-  console.log(`http://localhost:4000/auth/forgot-password?token=${token}`);
 
   //todo   Send url to email
   res.json({

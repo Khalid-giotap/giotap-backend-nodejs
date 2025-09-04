@@ -10,6 +10,11 @@ const ParkingLotSchema = new mongoose.Schema(
       ref: "Vehicle",
       default: null,
     },
+    transportCompanyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "TransportCompany",
+      default: null,
+    },
     location: {
       lat: {
         type: String,
@@ -33,6 +38,11 @@ const ParkingLotSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Add performance indexes (lot already has unique index)
+ParkingLotSchema.index({ transportCompanyId: 1 });
+ParkingLotSchema.index({ vehicleId: 1 });
+ParkingLotSchema.index({ isEmpty: 1 });
 
 const ParkingLot = mongoose.model("ParkingLot", ParkingLotSchema);
 

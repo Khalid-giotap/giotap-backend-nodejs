@@ -27,7 +27,6 @@ export const createParent = catchAsyncErrors(async (req, res) => {
 
 export const createParents = catchAsyncErrors(async (req, res) => {
   const parents = req.body;
-  console.log(parents);
   if (!Array.isArray(parents) || parents.length === 0)
     throw Error("Please provide an array of parents");
 
@@ -62,7 +61,6 @@ export const getParents = catchAsyncErrors(async (req, res) => {
       ],
     };
   }
-  console.log(query);
   const parents = await Parent.find(query)
     .skip((page - 1) * limit)
     .limit(limit);

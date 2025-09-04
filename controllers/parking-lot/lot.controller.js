@@ -3,9 +3,15 @@ import ParkingLot from "../../models/parking-lot.model.js";
 import { createError } from "../../utils/error.js";
 
 export const createParkingLot = catchAsyncErrors(async (req, res, next) => {
+  const { transportCompanyId } = req.body;
+
   const parkingLot = await ParkingLot.create({
     ...req.body,
     isEmpty: req.body.vehicleId ? true : false,
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user.transportCompanyId
+        : transportCompanyId,
   });
 
   res.status(201).json({
@@ -28,6 +34,10 @@ export const createParkingLots = catchAsyncErrors(async (req, res) => {
     ...c,
     createdBy: req.user._id,
     isEmpty: c.vehicleId ? true : false,
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user._id
+        : req.user.transportCompanyId,
   }));
 
   const createdLots = await ParkingLot.insertMany(lotsToInsert);
@@ -44,10 +54,12 @@ export const createParkingLots = catchAsyncErrors(async (req, res) => {
 });
 
 export const getParkingLots = catchAsyncErrors(async (req, res, next) => {
-  const parkingLots = await ParkingLot.find().populate(
-    "vehicleId",
-    "_id plateNumber model"
-  );
+  const parkingLots = await ParkingLot.find({
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user._id
+        : req.user.transportCompanyId,
+  }).populate("vehicleId", "_id plateNumber model");
 
   if (!parkingLots) {
     throw createError("No empty parking lots found", 404);
@@ -85,6 +97,14 @@ export const getParkingLot = catchAsyncErrors(async (req, res, next) => {
 export const getEmptyParkingLots = catchAsyncErrors(async (req, res, next) => {
   const parkingLots = await ParkingLot.find({
     $or: [{ vehicleId: null }, { isEmpty: true }],
+    $and: [
+      {
+        transportCompanyId:
+          req.user.role === "transport-admin"
+            ? req.user._id
+            : req.user.transportCompanyId,
+      },
+    ],
   });
 
   if (!parkingLots) {
@@ -144,7 +164,12 @@ export const deleteParkingLot = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const deleteParkingLots = catchAsyncErrors(async (req, res, next) => {
-  const parkingLots = await ParkingLot.deleteMany();
+  const parkingLots = await ParkingLot.deleteMany({
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user._id
+        : req.user.transportCompanyId,
+  });
 
   if (!parkingLots) {
     throw createError("some error deleting parking lots", 404);

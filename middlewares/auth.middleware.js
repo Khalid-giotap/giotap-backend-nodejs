@@ -20,7 +20,6 @@ export const isAuthenticated = catchAsyncErrors(async (req, res, next) => {
 
   let user = null;
   const { id, role } = decoded;
-  console.log(id, role);
   switch (role) {
     case "super-admin":
     case "transport-admin":

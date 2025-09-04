@@ -9,13 +9,11 @@ export const createCompany = catchAsyncErrors(async (req, res) => {
   let company = await TransportCompany.findOne({ name: req.body.name });
 
   if (company) throw Error("Company already exists!", 400);
-  console.log(req.user._id);
   company = await TransportCompany.create({
     ...req.body,
     createdBy: req.user._id,
   });
 
-  console.log(company);
 
   if (!company) throw Error("Error creating company, Try again!", 400);
 
@@ -28,9 +26,7 @@ export const createCompany = catchAsyncErrors(async (req, res) => {
 
 export const createCompanies = catchAsyncErrors(async (req, res) => {
   const companies = req.body;
-console.log(companies)
   if (!Array.isArray(companies) || companies.length === 0) {
-    console.log('here')
     throw Error("Please provide an array of companies");
   }
 
@@ -66,7 +62,6 @@ console.log(companies)
 export const getCompanies = catchAsyncErrors(async (req, res) => {
   const { page = 1, limit = 10, search = "", status = "" } = req.query;
 
-  console.log(req.query)
   const query = {
     name: { $regex: search, $options: "i" },
     status,
@@ -87,7 +82,6 @@ export const getCompanies = catchAsyncErrors(async (req, res) => {
     })
     .skip((page - 1) * limit)
     .limit(limit);
-console.log(companies)
   const totalCount = await TransportCompany.countDocuments(query);
 
   res.status(200).json({
@@ -120,7 +114,6 @@ export const getCompany = catchAsyncErrors(async (req, res) => {
       select: "plateNumber model capacity status currentLocation",
     });
 
-  console.log(company);
   if (!company) throw Error("Company not found!", 404);
 
   res.status(200).json({

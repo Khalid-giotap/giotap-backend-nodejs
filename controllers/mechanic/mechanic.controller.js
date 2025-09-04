@@ -3,14 +3,24 @@ import bcrypt from "bcryptjs";
 import Mechanic from "../../models/mechanic.model.js";
 
 export const createMechanic = catchAsyncErrors(async (req, res) => {
-  const { fullName, email, password, phone } = req.body;
+  const { fullName, email, password, phone, transportCompanyId } = req.body;
 
   if (!fullName) throw Error("Name is required!");
   if (!email) throw Error("Email is required!");
   if (!password) throw Error("Password is required!");
   if (!phone) throw Error("Phone is required!");
 
-  let mechanic = await Mechanic.findOne({ $or: [{ email }, { phone }] });
+  let mechanic = await Mechanic.findOne({
+    $or: [{ email }, { phone }],
+    $and: [
+      {
+        transportCompanyId:
+          req.user.role === "transport-admin"
+            ? req.user.transportCompanyId.toString()
+            : transportCompanyId,
+      },
+    ],
+  });
 
   if (mechanic) {
     throw Error("Mechanic with same email or phone exist already!");
@@ -21,6 +31,9 @@ export const createMechanic = catchAsyncErrors(async (req, res) => {
     email,
     phone,
     password,
+    ...req.body,
+    transportCompanyId:
+      req.user.role === "transport-admin" ? req.user.transportCompanyId : null,
   });
 
   if (!mechanic) throw Error("Some error adding mechanic, Try again!");
@@ -40,8 +53,16 @@ export const createMechanics = catchAsyncErrors(async (req, res) => {
   }
 
   // Add createdBy automatically if needed
-
-  const createdMechanics = await Mechanic.insertMany(mechanics);
+  const newMechanics = mechanics.map((mechanic) => ({
+    ...mechanic,
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user.transportCompanyId
+        : mechanic.transportCompanyId
+        ? mechanic.transportCompanyId
+        : null,
+  }));
+  const createdMechanics = await Mechanic.insertMany(newMechanics);
 
   if (!createdMechanics)
     throw Error("Some error occurred creating mechanics, Try again!");
@@ -67,7 +88,6 @@ export const getMechanic = catchAsyncErrors(async (req, res) => {
   const mechanic = await Mechanic.findById(id);
 
   if (!mechanic) throw Error("Invalid resource, mechanic does not exist!");
-  console.log(mechanic);
 
   res.status(201).json({
     success: true,
@@ -77,11 +97,15 @@ export const getMechanic = catchAsyncErrors(async (req, res) => {
 });
 
 export const getAvailableMechanics = catchAsyncErrors(async (req, res) => {
-  console.log('called here')
-  const mechanics = await Mechanic.find({ assignedVehicle: null });
+  const mechanics = await Mechanic.find({
+    assignedVehicle: null,
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user._id
+        : req.user.transportCompanyId,
+  });
 
   if (!mechanics) throw Error("Invalid resource, mechanic does not exist!");
-  console.log(mechanics);
 
   res.status(201).json({
     success: true,
@@ -95,14 +119,12 @@ export const updateMechanic = catchAsyncErrors(async (req, res) => {
 
   if (!id) throw Error("Id is required to find the mechanic!");
 
-  delete req.body["password"];
   const mechanic = await Mechanic.findByIdAndUpdate(id, req.body, {
     new: true,
-    runValidators: true,
   });
+
   if (!mechanic) throw Error("Invalid resource, mechanic does not exist!");
 
-  console.log(mechanic);
   res.status(200).json({
     success: true,
     data: { mechanic },
@@ -128,7 +150,12 @@ export const deleteMechanic = catchAsyncErrors(async (req, res) => {
 });
 
 export const getMechanics = catchAsyncErrors(async (req, res) => {
-  const mechanics = await Mechanic.find();
+  const mechanics = await Mechanic.find({
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user._id
+        : req.user.transportCompanyId,
+  });
 
   if (!mechanics) throw Error("Mechanics not found!");
 
@@ -140,7 +167,12 @@ export const getMechanics = catchAsyncErrors(async (req, res) => {
 });
 
 export const deleteMechanics = catchAsyncErrors(async (req, res) => {
-  const mechanics = await Mechanic.deleteMany();
+  const mechanics = await Mechanic.deleteMany({
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user._id
+        : req.user.transportCompanyId,
+  });
 
   if (!mechanics) throw Error("Mechanics not found!");
 

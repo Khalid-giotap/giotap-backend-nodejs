@@ -4,7 +4,6 @@ import Student from "../../models/student.model.js";
 
 export const addSchool = catchAsyncErrors(async (req, res) => {
   const { name, email, phone } = req.body;
-  console.log(req.body);
   let school = await School.findOne({ $or: [{ email }, { phone }, { name }] });
   if (school) {
     throw Error("School already exists");
@@ -229,7 +228,6 @@ export const getAvailableSchools = catchAsyncErrors(async (req, res) => {
 });
 
 export const deleteSchools = catchAsyncErrors(async (req, res) => {
-  console.log("🚨 deleteSchools called at:", new Date().toISOString());
   const schools = await School.deleteMany({});
 
   if (!schools) throw Error("Invalid resource schools not found!");

@@ -6,7 +6,8 @@ import {
   getRoutes,
   updateRoute,
   deleteRoutes,
-  createRoutes,getAvailableRoutes
+  createRoutes,
+  getAvailableRoutes
 } from "../../controllers/route/route.controller.js";
 import { isAuthenticated } from "../../middlewares/auth.middleware.js";
 import { isRoleAuthorized } from "../../middlewares/role.middleware.js";

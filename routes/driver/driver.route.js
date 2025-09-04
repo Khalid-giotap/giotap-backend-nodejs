@@ -5,7 +5,8 @@ import {
   deleteDriver,
   getDriver,
   getDrivers,
-  updateDriver,getAvailableDrivers
+  updateDriver,
+  getAvailableDrivers
 } from "../../controllers/driver/driver.controller.js";
 
 import { isAuthenticated } from "../../middlewares/auth.middleware.js";

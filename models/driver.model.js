@@ -58,7 +58,12 @@ const DriverSchema = new mongoose.Schema(
     role:{
       type: String,
       default: "driver",
-    }
+    },
+    transportCompanyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "TransportCompany",
+      default: null,
+    },
   },
   { timestamps: true }
 );
@@ -83,6 +88,7 @@ DriverSchema.pre("save", async function (next) {
 });
 
 DriverSchema.index({ email: 1, phone: 1 }, { unique: true });
+
 const Driver = mongoose.model("Driver", DriverSchema);
 
 export default Driver;

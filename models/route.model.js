@@ -54,11 +54,6 @@ const RouteSchema = new mongoose.Schema(
       ref: "Driver",
       default: null,
     },
-    aideId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Aide",
-      default: null,
-    },
     vehicleId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Vehicle",
@@ -78,6 +73,10 @@ const RouteSchema = new mongoose.Schema(
           type: String,
           required: [true, "End Location name is required"],
           trim: true,
+        },
+        passed: {
+          type: Boolean,
+          default: false,
         },
       },
     ],

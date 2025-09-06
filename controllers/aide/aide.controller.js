@@ -61,7 +61,7 @@ export const getAvailableAides = catchAsyncErrors(async (req, res) => {
 
   // Only filter by transportCompanyId for transport-admin, super-admin sees all data
   if (req.user.role === "transport-admin") {
-    query.transportCompanyId = req.user._id;
+    query.transportCompanyId = req.user.transportCompanyId;
   }
 
   const aides = await Aide.find(query);
@@ -84,8 +84,10 @@ export const createAides = catchAsyncErrors(async (req, res) => {
     ...aide,
     transportCompanyId:
       req.user.role === "transport-admin"
-        ? req.user._id
-        : aide.transportCompanyId,
+        ? req.user.transportCompanyId
+        : aide.transportCompanyId
+        ? aide.transportCompanyId
+        : null,
   }));
   const createdAides = await Aide.insertMany(newAides);
 
@@ -137,9 +139,12 @@ export const getAides = catchAsyncErrors(async (req, res) => {
 
   // Only filter by transportCompanyId for transport-admin, super-admin sees all data
   if (req.user.role === "transport-admin") {
-    query.transportCompanyId = req.user._id;
+    query.transportCompanyId = req.user.transportCompanyId;
   }
-  const aides = await Aide.find(query);
+  const aides = await Aide.find(query).populate({
+    path: "vehicleId",
+    select: "plateNumber model",
+  });
 
   if (!aides) throw Error("Aides not found!", 404);
   res.json({

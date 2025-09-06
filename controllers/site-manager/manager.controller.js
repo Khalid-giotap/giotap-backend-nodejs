@@ -144,12 +144,13 @@ export const deleteSiteManager = catchAsyncErrors(async (req, res) => {
 });
 
 export const getSiteManagers = catchAsyncErrors(async (req, res) => {
-  const siteManagers = await SiteManager.find({
-    transportCompanyId:
-      req.user.role === "transport-admin"
-        ? req.user._id
-        : req.user.transportCompanyId,
-  });
+  const query = req.query;
+  console.log(query);
+  if (req.user.role === "super-admin") {
+    query.transportCompanyId = req.user.transportCompanyId;
+  }
+
+  const siteManagers = await SiteManager.find(query);
 
   if (!siteManagers)
     throw Error("Invalid resource, Site Managers not found!", 400);

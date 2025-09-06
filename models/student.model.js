@@ -51,10 +51,15 @@ const StudentSchema = new mongoose.Schema(
       sparse: true,
       maxlength: [20, "RFID tag must be at most 20 characters long"],
     },
-    role:{
+    role: {
       type: String,
       default: "student",
-    }
+    },
+    vehicleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Vehicle",
+      default: null,
+    },
   },
   { timestamps: true }
 );

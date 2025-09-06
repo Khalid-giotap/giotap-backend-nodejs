@@ -38,6 +38,10 @@ const VehicleSchema = new mongoose.Schema(
       ref: "TransportCompany",
       default: null,
     },
+    brand: {
+      type: String,
+      trim: true,
+    },
     status: {
       type: String,
       enum: ["active", "inactive", "maintenance"],

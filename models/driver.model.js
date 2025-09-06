@@ -64,6 +64,11 @@ const DriverSchema = new mongoose.Schema(
       ref: "TransportCompany",
       default: null,
     },
+    status: {
+      type: String,
+      enum: ["active", "inactive", "suspended"],
+      default: "active",
+    },
   },
   { timestamps: true }
 );

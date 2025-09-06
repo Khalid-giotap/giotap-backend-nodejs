@@ -7,7 +7,7 @@ import Vehicle from "../../models/vehicle.model.js";
 export const createVehicle = catchAsyncErrors(async (req, res) => {
   const { plateNumber } = req.body;
   const query = { plateNumber };
-  
+
   // Only filter by transportCompanyId for transport-admin, super-admin sees all data
   if (req.user.role === "transport-admin") {
     query.transportCompanyId = req.user.transportCompanyId.toString();
@@ -20,7 +20,10 @@ export const createVehicle = catchAsyncErrors(async (req, res) => {
   vehicle = await Vehicle.create({
     ...req.body,
     routeId: null,
-    transportCompanyId: req.user.role === "transport-admin" ? req.user.transportCompanyId.toString() : req.body.transportCompanyId,
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user.transportCompanyId.toString()
+        : req.body.transportCompanyId,
   });
 
   if (!vehicle) throw Error("Error creating vehicle!", 400);
@@ -40,15 +43,19 @@ export const createVehicle = catchAsyncErrors(async (req, res) => {
           _id: null,
           totalVehicles: { $sum: 1 },
           activeVehicles: {
-            $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] }
+            $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] },
           },
           maintenanceVehicles: {
-            $sum: { $cond: [{ $eq: ["$status", "maintenance"] }, 1, 0] }
-          }
-        }
-      }
+            $sum: { $cond: [{ $eq: ["$status", "maintenance"] }, 1, 0] },
+          },
+        },
+      },
     ]);
-    const stats = vehicleStats[0] || { totalVehicles: 0, activeVehicles: 0, maintenanceVehicles: 0 };
+    const stats = vehicleStats[0] || {
+      totalVehicles: 0,
+      activeVehicles: 0,
+      maintenanceVehicles: 0,
+    };
     global.io.to("admin-dashboard").emit("dashboard-update", {
       type: "vehicles",
       data: stats,
@@ -76,7 +83,10 @@ export const createVehicles = catchAsyncErrors(async (req, res) => {
   const newVehicles = vehicles.map((vehicle) => {
     return {
       ...vehicle,
-      transportCompanyId: req.user.role === "transport-admin" ? req.user._id : vehicle.transportCompanyId,
+      transportCompanyId:
+        req.user.role === "transport-admin"
+          ? req.user._id
+          : vehicle.transportCompanyId,
     };
   });
   const createdVehicles = await Vehicle.insertMany(newVehicles);
@@ -136,15 +146,19 @@ export const updateVehicle = catchAsyncErrors(async (req, res) => {
           _id: null,
           totalVehicles: { $sum: 1 },
           activeVehicles: {
-            $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] }
+            $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] },
           },
           maintenanceVehicles: {
-            $sum: { $cond: [{ $eq: ["$status", "maintenance"] }, 1, 0] }
-          }
-        }
-      }
+            $sum: { $cond: [{ $eq: ["$status", "maintenance"] }, 1, 0] },
+          },
+        },
+      },
     ]);
-    const stats = vehicleStats[0] || { totalVehicles: 0, activeVehicles: 0, maintenanceVehicles: 0 };
+    const stats = vehicleStats[0] || {
+      totalVehicles: 0,
+      activeVehicles: 0,
+      maintenanceVehicles: 0,
+    };
     global.io.to("admin-dashboard").emit("dashboard-update", {
       type: "vehicles",
       data: stats,
@@ -153,7 +167,7 @@ export const updateVehicle = catchAsyncErrors(async (req, res) => {
   }
 
   const query = {};
-  
+
   // Only filter by transportCompanyId for transport-admin, super-admin sees all data
   if (req.user.role === "transport-admin") {
     query.transportCompanyId = req.user._id;
@@ -195,15 +209,19 @@ export const deleteVehicle = catchAsyncErrors(async (req, res) => {
           _id: null,
           totalVehicles: { $sum: 1 },
           activeVehicles: {
-            $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] }
+            $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] },
           },
           maintenanceVehicles: {
-            $sum: { $cond: [{ $eq: ["$status", "maintenance"] }, 1, 0] }
-          }
-        }
-      }
+            $sum: { $cond: [{ $eq: ["$status", "maintenance"] }, 1, 0] },
+          },
+        },
+      },
     ]);
-    const stats = vehicleStats[0] || { totalVehicles: 0, activeVehicles: 0, maintenanceVehicles: 0 };
+    const stats = vehicleStats[0] || {
+      totalVehicles: 0,
+      activeVehicles: 0,
+      maintenanceVehicles: 0,
+    };
     global.io.to("admin-dashboard").emit("dashboard-update", {
       type: "vehicles",
       data: stats,
@@ -242,7 +260,7 @@ export const getVehicles = catchAsyncErrors(async (req, res) => {
   if (search) {
     query.$or = [
       { plateNumber: { $regex: search, $options: "i" } },
-      { model: { $regex: search, $options: "i" } }
+      { model: { $regex: search, $options: "i" } },
     ];
   }
   if (Object.keys(filters).length > 0) {
@@ -252,6 +270,14 @@ export const getVehicles = catchAsyncErrors(async (req, res) => {
   }
 
   const vehicles = await Vehicle.find(query)
+    .populate({
+      path: "routeId",
+      select: "name startLocation endLocation driverId stops",
+      populate: {
+        path: "driverId",
+        select: "fullName email phone licenseId isOnDuty status experience",
+      },
+    })
     .skip((page - 1) * limit)
     .limit(limit);
   if (!vehicles) {

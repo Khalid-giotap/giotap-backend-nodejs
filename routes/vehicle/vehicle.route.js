@@ -17,7 +17,7 @@ const vehicleRouter = express.Router();
 vehicleRouter.post(
   "/",
   isAuthenticated,
-  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  isRoleAuthorized(["super-admin", "transport-admin"]),
   createVehicle
 );
 vehicleRouter.post(
@@ -47,19 +47,19 @@ vehicleRouter.get(
 vehicleRouter.delete(
   "/:id",
   isAuthenticated,
-  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  isRoleAuthorized(["super-admin", "transport-admin"]),
   deleteVehicle
 );
 vehicleRouter.delete(
   "/",
   isAuthenticated,
-  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  isRoleAuthorized(["super-admin", "transport-admin"]),
   deleteVehicles
 );
 vehicleRouter.put(
   "/:id",
   isAuthenticated,
-  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  isRoleAuthorized(["super-admin", "transport-admin"]),
   updateVehicle
 );
 

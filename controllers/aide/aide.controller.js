@@ -3,11 +3,20 @@ import Aide from "../../models/aide.model.js";
 import Route from "../../models/route.model.js";
 
 export const createAide = catchAsyncErrors(async (req, res) => {
-  const { fullName, email, password, phone } = req.body;
+  const { fullName, email, password, phone, transportCompanyId } = req.body;
 
   const aideExist = await Aide.findOne({
     $or: [{ email }, { phone }],
+    $and: [
+      {
+        transportCompanyId:
+          req.user.role === "transport-admin"
+            ? req.user.transportCompanyId.toString()
+            : transportCompanyId,
+      },
+    ],
   });
+
   if (aideExist)
     throw Error("Aide already exist with same phone or email", 400);
 
@@ -16,6 +25,11 @@ export const createAide = catchAsyncErrors(async (req, res) => {
     email,
     password,
     phone,
+    ...req.body,
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user.transportCompanyId
+        : transportCompanyId,
   });
   if (!aide) throw Error("Some error creating aide, Try again!");
 
@@ -45,6 +59,11 @@ export const getAvailableAides = catchAsyncErrors(async (req, res) => {
     vehicleId: null,
   };
 
+  // Only filter by transportCompanyId for transport-admin, super-admin sees all data
+  if (req.user.role === "transport-admin") {
+    query.transportCompanyId = req.user.transportCompanyId;
+  }
+
   const aides = await Aide.find(query);
   if (!aides) throw Error("Invalid resource, aides does not exist!", 404);
 
@@ -57,14 +76,20 @@ export const getAvailableAides = catchAsyncErrors(async (req, res) => {
 
 export const createAides = catchAsyncErrors(async (req, res) => {
   const aides = req.body;
-  console.log(aides);
-
   if (!Array.isArray(aides) || aides.length === 0) {
     throw Error("Please provide an array of aides");
   }
-  // Add createdBy automatically if needed
-
-  const createdAides = await Aide.insertMany(aides);
+  // Add transportCompanyId automatically if needed
+  const newAides = aides.map((aide) => ({
+    ...aide,
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user.transportCompanyId
+        : aide.transportCompanyId
+        ? aide.transportCompanyId
+        : null,
+  }));
+  const createdAides = await Aide.insertMany(newAides);
 
   if (!createdAides)
     throw Error("Some error occurred creating aides, Try again!");
@@ -93,7 +118,6 @@ export const updateAide = catchAsyncErrors(async (req, res) => {
     data: { aide },
     message: "Aide updated successfully!",
   });
-  console.log("working updateAide");
 });
 
 export const deleteAide = catchAsyncErrors(async (req, res) => {
@@ -111,9 +135,18 @@ export const deleteAide = catchAsyncErrors(async (req, res) => {
 });
 
 export const getAides = catchAsyncErrors(async (req, res) => {
-  const aides = await Aide.find();
+  const query = {};
+
+  // Only filter by transportCompanyId for transport-admin, super-admin sees all data
+  if (req.user.role === "transport-admin") {
+    query.transportCompanyId = req.user.transportCompanyId;
+  }
+  const aides = await Aide.find(query).populate({
+    path: "vehicleId",
+    select: "plateNumber model",
+  });
+
   if (!aides) throw Error("Aides not found!", 404);
-  console.log(aides);
   res.json({
     success: true,
     data: { aides },
@@ -123,13 +156,10 @@ export const getAides = catchAsyncErrors(async (req, res) => {
 
 export const deleteAides = catchAsyncErrors(async (req, res) => {
   const aides = req.body;
-  console.log(aides);
 
-  console.log(await Aide.countDocuments());
   const deletedAides = await Aide.deleteMany({ _id: { $in: aides } });
   if (!deletedAides) throw Error("Aides not found!", 404);
 
-  console.log(await Aide.countDocuments());
   res.json({
     success: true,
     data: { deletedAides },

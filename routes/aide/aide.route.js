@@ -6,7 +6,8 @@ import {
   deleteAides,
   getAide,
   getAides,
-  updateAide,getAvailableAides
+  updateAide,
+  getAvailableAides
 } from "../../controllers/aide/aide.controller.js";
 import { isAuthenticated } from "../../middlewares/auth.middleware.js";
 import { isRoleAuthorized } from "../../middlewares/role.middleware.js";

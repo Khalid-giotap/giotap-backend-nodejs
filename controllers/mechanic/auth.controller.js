@@ -6,7 +6,6 @@ import jwt from "jsonwebtoken";
 
 export const signIn = catchAsyncErrors(async (req, res) => {
   const { email, password } = req.body;
-  console.log(req.body);
   if (!email || !password) throw Error("Email and password are required", 400);
 
   const user = await Mechanic.findOne({ email }).select("+password");
@@ -112,7 +111,12 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
 export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
   const { email } = req.body;
   if (!email) throw Error("Email is required");
-
+  const user = await Mechanic.findOne({ email });
+  if (!user) {
+    const error = new Error("Invalid email account not found!");
+    error.statusCode = 404;
+    throw error;
+  }
   const token = jwt.sign({ email }, process.env.JWT_SECRET, {
     expiresIn: "10m",
   });
@@ -125,7 +129,6 @@ export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
     expiresAt: expires,
   });
 
-  console.log(`http://localhost:4000/auth/forgot-password?token=${token}`);
 
   //todo   Send url to email
   res.json({

@@ -5,7 +5,6 @@ import PasswordReset from "../../models/password-reset.model.js";
 
 export const signIn = catchAsyncErrors(async (req, res) => {
   const { email, password } = req.body;
-
   const user = await Driver.findOne({ email }).select("+password");
   if (!user) {
     throw Error("Invalid credentials!", 400);
@@ -17,7 +16,7 @@ export const signIn = catchAsyncErrors(async (req, res) => {
   }
 
   const token = user.getSignedToken();
-  res
+res
     .cookie("token", token, {
       httpOnly: true,
       secure: true,
@@ -89,7 +88,12 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
 
 export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
   const { email } = req.body;
-
+  const user = await Driver.findOne({ email });
+  if (!user) {
+    const error = new Error("Invalid email account not found!");
+    error.statusCode = 404;
+    throw error;
+  }
   // Token generate
   const token = jwt.sign({ email }, process.env.JWT_SECRET, {
     expiresIn: "10m",
@@ -103,7 +107,6 @@ export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
     expiresAt: expires,
   });
 
-  console.log(`http://localhost:4000/auth/forgot-password?token=${token}`);
   // todo Send email to user
   // sendEmail(email, `https://yourapp.com/reset-password?token=${token}`)
 

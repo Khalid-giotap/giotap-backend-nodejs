@@ -1,17 +1,18 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
 import bcrypt from "bcryptjs";
 import Admin from "../../models/admin.model.js";
+import TransportCompany from "../../models/transport-company.model.js";
+import School from "../../models/school.model.js";
 
 export const createAdmin = catchAsyncErrors(async (req, res) => {
   const { email, phone } = req.body;
-  console.log("createAdmin");
+  
   let admin = await Admin.findOne({ $or: [{ email }, { phone }] });
 
   if (admin) throw Error("Admin already exist with same phone or email", 400);
 
   admin = await Admin.create({ ...req.body });
   if (!admin) throw Error("Error creating admin, Try again!", 400);
-  console.log(admin);
   res.status(201).json({
     success: true,
     data: {
@@ -22,7 +23,6 @@ export const createAdmin = catchAsyncErrors(async (req, res) => {
 });
 
 export const createAdmins = catchAsyncErrors(async (req, res) => {
-  // console.log('body he re',req.body)
   const admins = req.body;
 
   if (!Array.isArray(admins) || admins.length === 0)
@@ -33,7 +33,6 @@ export const createAdmins = catchAsyncErrors(async (req, res) => {
     ordered: false,
   });
 
-  console.log(createdAdmins);
   if (!createdAdmins)
     throw Error("Some error occurred creating admins, Try again!");
 
@@ -52,7 +51,6 @@ export const createAdmins = catchAsyncErrors(async (req, res) => {
 
 export const getAdmin = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
-  console.log("we are at getAdmin", id);
   if (!id) throw Error("Id is required to get admin!", 400);
   const admin = await Admin.findById(id);
   if (!admin) throw Error("Invalid resource, admin does not exist!", 404);
@@ -80,7 +78,7 @@ export const deleteAdmin = catchAsyncErrors(async (req, res) => {
 
 export const updateAdmin = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
-  const { role } = req.body;
+  const { role, schoolId, transportCompanyId } = req.body;
 
   if (!id) throw Error("Id is required to update admin!", 400);
 
@@ -93,8 +91,34 @@ export const updateAdmin = catchAsyncErrors(async (req, res) => {
       'Role must be "school-admin" or "super-admin" or "transport-admin"',
       400
     );
-
   const admin = await Admin.findByIdAndUpdate(id, req.body, { new: true });
+  if (transportCompanyId) {
+
+    if (admin.schoolId !== null) {
+      await TransportCompany.findByIdAndUpdate(admin.transportCompanyId, {
+        admin: null,
+      });
+    }
+    await TransportCompany.findByIdAndUpdate(transportCompanyId, {
+      admin: admin._id,
+    });
+    admin.transportCompanyId = transportCompanyId._id;
+  }
+
+  if (schoolId) {
+    if (admin.schoolId !== null) {
+      await School.findByIdAndUpdate(admin.schoolId, {
+        admin: null,
+      });
+    }
+    await School.findByIdAndUpdate(schoolId, {
+      admin: admin._id,
+    });
+    //   throw Error()
+    admin.schoolId = schoolId._id;
+  }
+  await admin.save();
+
   if (!admin) throw Error("Invalid resource, admin not exist!", 404);
   res.json({
     success: true,

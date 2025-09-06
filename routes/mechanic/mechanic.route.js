@@ -7,6 +7,7 @@ import {
   getMechanic,
   getMechanics,
   updateMechanic,
+  getAvailableMechanics
 } from "../../controllers/mechanic/mechanic.controller.js";
 import { isAuthenticated } from "../../middlewares/auth.middleware.js";
 import { isRoleAuthorized } from "../../middlewares/role.middleware.js";
@@ -28,6 +29,20 @@ mechanicRouter.post(
 );
 
 mechanicRouter.get(
+  "/",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  getMechanics
+);
+
+mechanicRouter.get(
+  "/available",
+  isAuthenticated,
+  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
+  getAvailableMechanics
+);
+
+mechanicRouter.get(
   "/:id",
   isAuthenticated,
   isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
@@ -46,12 +61,6 @@ mechanicRouter.delete(
   deleteMechanic
 );
 
-mechanicRouter.get(
-  "/",
-  isAuthenticated,
-  isRoleAuthorized(["super-admin", "transport-admin", "site_manager"]),
-  getMechanics
-);
 mechanicRouter.delete(
   "/",
   isAuthenticated,

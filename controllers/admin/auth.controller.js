@@ -4,6 +4,8 @@ import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
 import { sendEmail } from "../../utils/sendEmail.js";
 import { alertWelcome } from "../../email-templates/alert.js";
 import { sendSms } from "../../utils/sendSms.js";
+import PasswordReset from "../../models/password-reset.model.js";
+import User from "../../models/admin.model.js";
 
 export const signUp = catchAsyncErrors(async (req, res) => {
   const { fullName, email, password, phone } = req.body;
@@ -24,6 +26,8 @@ export const signUp = catchAsyncErrors(async (req, res) => {
     password,
   });
 
+  console.log(user)
+
   res.status(201).json({
     success: true,
     data: {
@@ -35,10 +39,10 @@ export const signUp = catchAsyncErrors(async (req, res) => {
 
 export const signIn = catchAsyncErrors(async (req, res) => {
   const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-  console.log(req.body);
   const { email, password } = req.body;
+  console.log(req.body)
   let user = await Admin.findOne({ email }).select("+password");
-  console.log(user);
+  console.log(user)
   if (!user) {
     const error = new Error("Invalid credentials!");
     error.statusCode = 401;
@@ -46,7 +50,6 @@ export const signIn = catchAsyncErrors(async (req, res) => {
   }
 
   const isPasswordMatch = await user.comparePassword(password);
-  console.log(isPasswordMatch);
 
   if (!isPasswordMatch) {
     const error = new Error("Invalid credentials!");
@@ -55,9 +58,9 @@ export const signIn = catchAsyncErrors(async (req, res) => {
   }
 
   const token = user.getSignedToken();
-  console.log("token", token);
   sendEmail(user.email, "Login Alert", alertWelcome(user.fullName));
 
+    // const url = process.env.FRONTEND_URL + user.role === 'super-admin' ? '/admin' : '/user.'
   return res
     .cookie("token", token, {
       httpOnly: true,
@@ -70,6 +73,7 @@ export const signIn = catchAsyncErrors(async (req, res) => {
       success: true,
       data: {
         user,
+        url:process.env.FRONTEND_URL + '/user.'
       },
       message: "Signed in successfully!",
     });
@@ -90,12 +94,15 @@ export const aboutMe = catchAsyncErrors(async (req, res) => {
 });
 
 export const signOut = catchAsyncErrors(async (req, res) => {
+
+
+  console.log("Signing out")
   res
     .clearCookie("token", {
       httpOnly: true,
-      secure: true,
       sameSite: "none",
-	    maxAge:0,
+      secure: true, 
+      maxAge: 0,
     })
     .status(200)
     .json({
@@ -148,6 +155,12 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
 export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
   const { email } = req.body;
 
+    const user = await User.findOne({ email });
+    if (!user) {
+      const error = new Error("Invalid email account not found!");
+      error.statusCode = 404;
+      throw error;
+    }
   // Token generate
   const token = jwt.sign({ email }, process.env.JWT_SECRET, {
     expiresIn: "10m",
@@ -192,11 +205,18 @@ export const resetPassword = catchAsyncErrors(async (req, res, next) => {
   }
 
   // Update user password here...
-  await User.updateOne({ email: resetRecord.email }, { password: newPassword });
+  const user =  await User.findOne({ email: resetRecord.email }).select("+password");
+  console.log(user,newPassword)
+  if(!user)
+    throw new Error("User not found!");
+
+  user.password = newPassword;
+  console.log(user)
+  await user.save();
 
   // Mark token as used
   resetRecord.used = true;
   await resetRecord.save();
 
-  res.json({ message: "Password reset successful, please sign in!" });
+  res.json({ success:true,message: "Password reset successful, please sign in!" });
 });

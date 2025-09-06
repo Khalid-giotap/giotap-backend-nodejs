@@ -46,6 +46,11 @@ const MechanicSchema = new mongoose.Schema(
       enum: ["active", "inactive", "suspended"],
       default: "active",
     },
+    transportCompanyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "TransportCompany",
+      default: null,
+    },
   },
   { timestamps: true }
 );
@@ -66,7 +71,6 @@ MechanicSchema.pre("save", async function (next) {
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  console.log(this.password, "this.password in pre save");
   next();
 });
 

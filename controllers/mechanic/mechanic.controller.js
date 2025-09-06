@@ -1,16 +1,44 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
 import bcrypt from "bcryptjs";
 import Mechanic from "../../models/mechanic.model.js";
+import Vehicle from "../../models/vehicle.model.js";
 
 export const createMechanic = catchAsyncErrors(async (req, res) => {
-  const { fullName, email, password, phone } = req.body;
+  const {
+    fullName,
+    email,
+    password,
+    phone,
+    transportCompanyId,
+    assignedVehicle,
+  } = req.body;
 
   if (!fullName) throw Error("Name is required!");
   if (!email) throw Error("Email is required!");
   if (!password) throw Error("Password is required!");
   if (!phone) throw Error("Phone is required!");
+  console.log(req.body);
+  if (assignedVehicle) {
+    const assignedMechanic = Mechanic.findOne({
+      assignedVehicle: req.body.assignedVehicle,
+    });
 
-  let mechanic = await Mechanic.findOne({ $or: [{ email }, { phone }] });
+    if (assignedMechanic) {
+      throw Error("Vehicle is already assigned to a mechanic!");
+    }
+  }
+
+  let mechanic = await Mechanic.findOne({
+    $or: [{ email }, { phone }],
+    $and: [
+      {
+        transportCompanyId:
+          req.user.role === "transport-admin"
+            ? req.user.transportCompanyId.toString()
+            : transportCompanyId,
+      },
+    ],
+  });
 
   if (mechanic) {
     throw Error("Mechanic with same email or phone exist already!");
@@ -21,10 +49,18 @@ export const createMechanic = catchAsyncErrors(async (req, res) => {
     email,
     phone,
     password,
+    ...req.body,
+    transportCompanyId:
+      req.user.role === "transport-admin" ? req.user.transportCompanyId : null,
   });
 
   if (!mechanic) throw Error("Some error adding mechanic, Try again!");
 
+  if (assignedVehicle) {
+    await Vehicle.findByIdAndUpdate(assignedVehicle, {
+      status: "maintenance",
+    });
+  }
   res.status(201).json({
     success: true,
     data: { mechanic },
@@ -40,8 +76,16 @@ export const createMechanics = catchAsyncErrors(async (req, res) => {
   }
 
   // Add createdBy automatically if needed
-
-  const createdMechanics = await Mechanic.insertMany(mechanics);
+  const newMechanics = mechanics.map((mechanic) => ({
+    ...mechanic,
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user.transportCompanyId
+        : mechanic.transportCompanyId
+        ? mechanic.transportCompanyId
+        : null,
+  }));
+  const createdMechanics = await Mechanic.insertMany(newMechanics);
 
   if (!createdMechanics)
     throw Error("Some error occurred creating mechanics, Try again!");
@@ -67,7 +111,6 @@ export const getMechanic = catchAsyncErrors(async (req, res) => {
   const mechanic = await Mechanic.findById(id);
 
   if (!mechanic) throw Error("Invalid resource, mechanic does not exist!");
-  console.log(mechanic);
 
   res.status(201).json({
     success: true,
@@ -76,19 +119,55 @@ export const getMechanic = catchAsyncErrors(async (req, res) => {
   });
 });
 
+export const getAvailableMechanics = catchAsyncErrors(async (req, res) => {
+  const query = {
+    assignedVehicle: null,
+  };
+
+  if (req.user.role === "transport-admin") {
+    query.transportCompanyId = req.user.transportCompanyId;
+  }
+  const mechanics = await Mechanic.find(query);
+
+  if (!mechanics) throw Error("Invalid resource, mechanic does not exist!");
+
+  res.status(201).json({
+    success: true,
+    data: { mechanics },
+    message: "Mechanics found successfully!",
+  });
+});
+
 export const updateMechanic = catchAsyncErrors(async (req, res) => {
   const { id } = req.params;
+  const { assignedVehicle } = req.body;
 
   if (!id) throw Error("Id is required to find the mechanic!");
+  let assignedMechanic = await Mechanic.findOne({ assignedVehicle });
 
-  delete req.body['password']
-  const mechanic = await Mechanic.findByIdAndUpdate(id, req.body, {
+  if (assignedMechanic) {
+    throw Error("Vehicle is already assigned to a mechanic!");
+  }
+  let mechanic = await Mechanic.findByIdAndUpdate(id, req.body, {
     new: true,
-    runValidators: true,
-  })
+  });
+
+  if (assignedVehicle && mechanic.assignedVehicle) {
+    mechanic = await Mechanic.findByIdAndUpdate(mechanic._id, { ...req.body });
+  } else {
+    mechanic = await Mechanic.findByIdAndUpdate(
+      id,
+      { assignedVehicle },
+      {
+        new: true,
+      }
+    );
+    await Vehicle.findByIdAndUpdate(assignedVehicle, {
+      status: "maintenance",
+    });
+  }
   if (!mechanic) throw Error("Invalid resource, mechanic does not exist!");
 
-  console.log(mechanic);
   res.status(200).json({
     success: true,
     data: { mechanic },
@@ -114,8 +193,13 @@ export const deleteMechanic = catchAsyncErrors(async (req, res) => {
 });
 
 export const getMechanics = catchAsyncErrors(async (req, res) => {
-  const mechanics = await Mechanic.find();
-
+  const query = {};
+  if (req.user.role === "transport-admin") {
+    query.transportCompanyId = req.user.transportCompanyId;
+  }
+  console.log(query);
+  const mechanics = await Mechanic.find(query);
+  console.log(mechanics);
   if (!mechanics) throw Error("Mechanics not found!");
 
   res.status(200).json({
@@ -126,7 +210,12 @@ export const getMechanics = catchAsyncErrors(async (req, res) => {
 });
 
 export const deleteMechanics = catchAsyncErrors(async (req, res) => {
-  const mechanics = await Mechanic.deleteMany();
+  const mechanics = await Mechanic.deleteMany({
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user._id
+        : req.user.transportCompanyId,
+  });
 
   if (!mechanics) throw Error("Mechanics not found!");
 

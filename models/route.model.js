@@ -38,6 +38,11 @@ const RouteSchema = new mongoose.Schema(
         trim: true,
       },
     },
+    transportCompanyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "TransportCompany",
+      default: null,
+    },
     schoolId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "School",
@@ -47,11 +52,6 @@ const RouteSchema = new mongoose.Schema(
     driverId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Driver",
-      default: null,
-    },
-    aideId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Aide",
       default: null,
     },
     vehicleId: {
@@ -74,6 +74,10 @@ const RouteSchema = new mongoose.Schema(
           required: [true, "End Location name is required"],
           trim: true,
         },
+        passed: {
+          type: Boolean,
+          default: false,
+        },
       },
     ],
     distance: {
@@ -87,6 +91,12 @@ const RouteSchema = new mongoose.Schema(
 );
 
 RouteSchema.index({ name: 1 }, { unique: true });
+// Add performance indexes (schoolId already has index: true)
+RouteSchema.index({ transportCompanyId: 1 });
+RouteSchema.index({ driverId: 1 });
+RouteSchema.index({ vehicleId: 1 });
+RouteSchema.index({ aideId: 1 });
+
 const Route = mongoose.model("Route", RouteSchema);
 
 export default Route;

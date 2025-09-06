@@ -1,5 +1,9 @@
 import express from "express";
-import { addStudent,getStudents,addStudents } from "../../controllers/student/student.controller.js";
+import { 
+  addStudent,
+  getStudents,
+  addStudents
+} from "../../controllers/student/student.controller.js";
 import { isAuthenticated } from "../../middlewares/auth.middleware.js";
 import { isRoleAuthorized } from "../../middlewares/role.middleware.js";
 

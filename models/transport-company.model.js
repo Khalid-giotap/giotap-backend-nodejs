@@ -40,6 +40,11 @@ const transportCompanySchema = new mongoose.Schema(
         lowercase: true,
       },
     },
+    admin: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+      default: null,
+    },
     logo: {
       type: String,
     },
@@ -64,7 +69,11 @@ const transportCompanySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Subscription",
     },
-   
+
+    // Add to transport-company.model.js
+    description: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

@@ -6,13 +6,24 @@ import Vehicle from "../../models/vehicle.model.js";
 // Single
 export const createVehicle = catchAsyncErrors(async (req, res) => {
   const { plateNumber } = req.body;
-  let vehicle = await Vehicle.findOne({ plateNumber });
+  const query = { plateNumber };
+
+  // Only filter by transportCompanyId for transport-admin, super-admin sees all data
+  if (req.user.role === "transport-admin") {
+    query.transportCompanyId = req.user.transportCompanyId.toString();
+  }
+
+  let vehicle = await Vehicle.findOne(query);
 
   if (vehicle) throw Error("Vehicle with same plate number exist already!");
 
   vehicle = await Vehicle.create({
     ...req.body,
     routeId: null,
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user.transportCompanyId.toString()
+        : req.body.transportCompanyId,
   });
 
   if (!vehicle) throw Error("Error creating vehicle!", 400);
@@ -22,17 +33,33 @@ export const createVehicle = catchAsyncErrors(async (req, res) => {
     global.io.to("vehicles-updates").emit("vehicle-update", {
       type: "created",
       vehicle,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
-    // Broadcast dashboard update
-    const totalVehicles = await Vehicle.countDocuments();
-    const activeVehicles = await Vehicle.countDocuments({ status: 'active' });
-    const maintenanceVehicles = await Vehicle.countDocuments({ status: 'maintenance' });
+
+    // Broadcast dashboard update (optimized with single aggregation)
+    const vehicleStats = await Vehicle.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalVehicles: { $sum: 1 },
+          activeVehicles: {
+            $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] },
+          },
+          maintenanceVehicles: {
+            $sum: { $cond: [{ $eq: ["$status", "maintenance"] }, 1, 0] },
+          },
+        },
+      },
+    ]);
+    const stats = vehicleStats[0] || {
+      totalVehicles: 0,
+      activeVehicles: 0,
+      maintenanceVehicles: 0,
+    };
     global.io.to("admin-dashboard").emit("dashboard-update", {
       type: "vehicles",
-      data: { totalVehicles, activeVehicles, maintenanceVehicles },
-      timestamp: new Date().toISOString()
+      data: stats,
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -52,9 +79,17 @@ export const createVehicles = catchAsyncErrors(async (req, res) => {
     throw Error("Please provide an array of vehicles");
   }
 
-  // Add createdBy automatically if needed
-
-  const createdVehicles = await Vehicle.insertMany(vehicles);
+  // Add transportCompanyId automatically if needed
+  const newVehicles = vehicles.map((vehicle) => {
+    return {
+      ...vehicle,
+      transportCompanyId:
+        req.user.role === "transport-admin"
+          ? req.user._id
+          : vehicle.transportCompanyId,
+    };
+  });
+  const createdVehicles = await Vehicle.insertMany(newVehicles);
 
   if (!createdVehicles)
     throw Error("Some error occurred creating vehicles, Try again!");
@@ -77,7 +112,7 @@ export const getVehicle = catchAsyncErrors(async (req, res) => {
   if (!id) throw Error("Id is required to find the vehicle!");
   const vehicle = await Vehicle.findById(id);
 
-  if (vehicle) throw Error("Invalid resource, Vehicle not found!");
+  if (!vehicle) throw Error("Invalid resource, Vehicle not found!");
 
   res.json({
     success: true,
@@ -101,21 +136,44 @@ export const updateVehicle = catchAsyncErrors(async (req, res) => {
     global.io.to("vehicles-updates").emit("vehicle-update", {
       type: "updated",
       vehicle,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
-    // Broadcast dashboard update
-    const totalVehicles = await Vehicle.countDocuments();
-    const activeVehicles = await Vehicle.countDocuments({ status: 'active' });
-    const maintenanceVehicles = await Vehicle.countDocuments({ status: 'maintenance' });
+
+    // Broadcast dashboard update (optimized with single aggregation)
+    const vehicleStats = await Vehicle.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalVehicles: { $sum: 1 },
+          activeVehicles: {
+            $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] },
+          },
+          maintenanceVehicles: {
+            $sum: { $cond: [{ $eq: ["$status", "maintenance"] }, 1, 0] },
+          },
+        },
+      },
+    ]);
+    const stats = vehicleStats[0] || {
+      totalVehicles: 0,
+      activeVehicles: 0,
+      maintenanceVehicles: 0,
+    };
     global.io.to("admin-dashboard").emit("dashboard-update", {
       type: "vehicles",
-      data: { totalVehicles, activeVehicles, maintenanceVehicles },
-      timestamp: new Date().toISOString()
+      data: stats,
+      timestamp: new Date().toISOString(),
     });
   }
 
-  const vehicles = await Vehicle.find();
+  const query = {};
+
+  // Only filter by transportCompanyId for transport-admin, super-admin sees all data
+  if (req.user.role === "transport-admin") {
+    query.transportCompanyId = req.user._id;
+  }
+
+  const vehicles = await Vehicle.find(query);
   res.json({
     success: true,
     data: { vehicles },
@@ -141,17 +199,33 @@ export const deleteVehicle = catchAsyncErrors(async (req, res) => {
     global.io.to("vehicles-updates").emit("vehicle-update", {
       type: "deleted",
       vehicleId: id,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
-    // Broadcast dashboard update
-    const totalVehicles = await Vehicle.countDocuments();
-    const activeVehicles = await Vehicle.countDocuments({ status: 'active' });
-    const maintenanceVehicles = await Vehicle.countDocuments({ status: 'maintenance' });
+
+    // Broadcast dashboard update (optimized with single aggregation)
+    const vehicleStats = await Vehicle.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalVehicles: { $sum: 1 },
+          activeVehicles: {
+            $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] },
+          },
+          maintenanceVehicles: {
+            $sum: { $cond: [{ $eq: ["$status", "maintenance"] }, 1, 0] },
+          },
+        },
+      },
+    ]);
+    const stats = vehicleStats[0] || {
+      totalVehicles: 0,
+      activeVehicles: 0,
+      maintenanceVehicles: 0,
+    };
     global.io.to("admin-dashboard").emit("dashboard-update", {
       type: "vehicles",
-      data: { totalVehicles, activeVehicles, maintenanceVehicles },
-      timestamp: new Date().toISOString()
+      data: stats,
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -178,9 +252,16 @@ export const getVehicles = catchAsyncErrors(async (req, res) => {
   const { page = 1, limit = 10, search = "", filters = {} } = req.query;
   const query = {};
 
+  // Only filter by transportCompanyId for transport-admin, super-admin sees all data
+  if (req.user.role === "transport-admin") {
+    query.transportCompanyId = req.user.transportCompanyId.toString();
+  }
+
   if (search) {
-    query.plateNumber = { $regex: search, $options: "i" };
-    query.model = { $regex: search, $options: "i" };
+    query.$or = [
+      { plateNumber: { $regex: search, $options: "i" } },
+      { model: { $regex: search, $options: "i" } },
+    ];
   }
   if (Object.keys(filters).length > 0) {
     query.$and = Object.entries(filters).map(([key, value]) => ({
@@ -189,6 +270,14 @@ export const getVehicles = catchAsyncErrors(async (req, res) => {
   }
 
   const vehicles = await Vehicle.find(query)
+    .populate({
+      path: "routeId",
+      select: "name startLocation endLocation driverId stops",
+      populate: {
+        path: "driverId",
+        select: "fullName email phone licenseId isOnDuty status experience",
+      },
+    })
     .skip((page - 1) * limit)
     .limit(limit);
   if (!vehicles) {
@@ -210,7 +299,6 @@ export const getVehicles = catchAsyncErrors(async (req, res) => {
 });
 
 export const getAvailableVehicles = catchAsyncErrors(async (req, res) => {
-  console.log("getAvailableVehicles");
   const query = {
     routeId: null,
   };

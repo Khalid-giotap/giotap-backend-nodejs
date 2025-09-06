@@ -1,5 +1,6 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
 import Student from "../../models/student.model.js";
+import School from "../../models/school.model.js";
 import { createError } from "../../utils/error.js";
 
 export const addStudent = catchAsyncErrors(async (req, res) => {
@@ -12,6 +13,7 @@ export const addStudent = catchAsyncErrors(async (req, res) => {
 
   student = await Student.create({
     ...req.body,
+    transportCompanyId: req.user.role === "transport-admin" ? req.user._id : req.body.transportCompanyId,
   });
 
   await School.findByIdAndUpdate(req.body.schoolId, {
@@ -36,7 +38,13 @@ export const addStudents = catchAsyncErrors(async (req, res) => {
 
   // Add createdBy automatically if needed
 
-  const createdStudents = await Student.insertMany(students);
+  const newStudents = students.map((student) => {
+    return {
+      ...student,
+      transportCompanyId: req.user.role === "transport-admin" ? req.user._id : student.transportCompanyId,
+    };
+  }); 
+  const createdStudents = await Student.insertMany(newStudents);
 
   if (!createdStudents)
     throw Error("Some error occurred adding students, Try again!");
@@ -55,10 +63,35 @@ export const addStudents = catchAsyncErrors(async (req, res) => {
 });
 
 export const getStudents = catchAsyncErrors(async (req, res) => {
-  const students = await Student.find({});
+  const query = {};
+  
+  // Only filter by transportCompanyId for transport-admin, super-admin sees all data
+  if (req.user.role === "transport-admin") {
+    query.transportCompanyId = req.user._id;
+  }
+
+  const students = await Student.find(query);
+  if (!students) throw Error("Invalid resource, students does not exist!", 404);
   res.json({
     success: true,
     data: { students },
     message: "Students fetched successfully!",
   });
 });
+
+export const deleteStudents = catchAsyncErrors(async (req, res) => {
+  const query = {};
+  
+  // Only filter by transportCompanyId for transport-admin, super-admin sees all data
+  if (req.user.role === "transport-admin") {
+    query.transportCompanyId = req.user._id;
+  }
+
+  const students = await Student.deleteMany(query);
+  if (!students) throw Error("Invalid resource, students does not exist!", 404);
+  res.json({
+    success: true,
+    data: { students },
+    message: "Students deleted successfully!",
+  });
+}); 

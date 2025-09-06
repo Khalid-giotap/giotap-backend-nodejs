@@ -109,6 +109,12 @@ export const changePassword = catchAsyncErrors(async (req, res) => {
 export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
   const { email } = req.body;
 
+  const user = await Parent.findOne({ email });
+  if (!user) {
+    const error = new Error("Invalid email account not found!");
+    error.statusCode = 404;
+    throw error;
+  }
   if (!email) throw createError("Please provide email!", 400);
   // generate token
   const token = jwt.sign({ email }, process.env.JWT_SECRET, {
@@ -124,7 +130,6 @@ export const requestPasswordReset = catchAsyncErrors(async (req, res) => {
   });
 
   // todo send email
-  console.log(`http://localhost:4000/auth/forgot-password?token=${token}`);
 
   res.json({ success: true, message: "Password reset link sent to email" });
 });

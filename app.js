@@ -29,9 +29,10 @@ import parentRoutes from "./routes/parent/parent.route.js";
 import parentAuthRoutes from "./routes/parent/auth.route.js";
 import studentRoutes from "./routes/student/student.route.js";
 import parkingLotRoutes from "./routes/parking-lot/lot.route.js";
+import statsRoutes from "./routes/stats.route.js";
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 const server = createServer(app);
 
 // CORS configuration
@@ -61,14 +62,19 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors(corsOptions));
 
-// todo
-// // Rate limiting
-// app.use("/api/v1/*/auth", authLimiter);
+// Rate limiting - Apply auth limiter to specific auth endpoints
+// app.use("/api/v1/admin/auth", authLimiter);
+// app.use("/api/v1/driver/auth", authLimiter);
+// app.use("/api/v1/aide/auth", authLimiter);
+// app.use("/api/v1/mechanic/auth", authLimiter);
+// app.use("/api/v1/parent/auth", authLimiter);
+// app.use("/api/v1/site-manager/auth", authLimiter);
 // app.use("/api/v1", apiLimiter);
 
 //* Apis
 
 // Drivers
+app.use("/api/v1/stats", statsRoutes);
 app.use("/api/v1/admin/driver", driverRoutes);
 app.use("/api/v1/driver/auth", driverAuthRoutes);
 

@@ -4,7 +4,6 @@ import Student from "../../models/student.model.js";
 
 export const addSchool = catchAsyncErrors(async (req, res) => {
   const { name, email, phone } = req.body;
-  console.log(req.body);
   let school = await School.findOne({ $or: [{ email }, { phone }, { name }] });
   if (school) {
     throw Error("School already exists");
@@ -35,7 +34,7 @@ export const addSchools = catchAsyncErrors(async (req, res) => {
   // Add createdBy automatically if needed
   const schoolsToInsert = schools.map((c) => ({
     ...c,
-    createdBy: req.user._id,
+    admin : c.admin ? c.admin : null,
     routes: c.routes || [],
   }));
 
@@ -170,7 +169,7 @@ export const getSchools = catchAsyncErrors(async (req, res) => {
         }
       ]
     })
-    .populate("createdBy", "fullName email")
+    .populate("admin", "fullName email")
     .skip((page - 1) * limit)
     .limit(parseInt(limit));
 
@@ -229,7 +228,6 @@ export const getAvailableSchools = catchAsyncErrors(async (req, res) => {
 });
 
 export const deleteSchools = catchAsyncErrors(async (req, res) => {
-  console.log("🚨 deleteSchools called at:", new Date().toISOString());
   const schools = await School.deleteMany({});
 
   if (!schools) throw Error("Invalid resource schools not found!");

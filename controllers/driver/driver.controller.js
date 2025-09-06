@@ -1,19 +1,22 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 import Driver from "../../models/driver.model.js";
 import Vehicle from "../../models/vehicle.model.js";
 import Route from "../../models/route.model.js";
 
 export const createDriver = catchAsyncErrors(async (req, res) => {
-  const { email, phone, password } = req.body;
+  const { email, phone, password, transportCompanyId } = req.body;
 
   const existingDriver = await Driver.findOne({ $or: [{ email }, { phone }] });
   if (existingDriver) {
     throw Error("Driver already exist with same phone or email", 400);
   }
-
   const driver = await Driver.create({
     ...req.body,
+    vehicleId: req.body.vehicleId === '' ? null: req.body.vehicleId ,
+    routeId: req.body.routeId === '' ? null: req.body.routeId ,
+    transportCompanyId: req.user.role === "transport-admin" ? req.user.transportCompanyId.toString() : transportCompanyId,
   });
 
   if (!driver) throw Error("Error creating driver, Try again!");
@@ -23,16 +26,26 @@ export const createDriver = catchAsyncErrors(async (req, res) => {
     global.io.to("drivers-updates").emit("driver-update", {
       type: "created",
       driver,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
-    // Broadcast dashboard update
-    const totalDrivers = await Driver.countDocuments();
-    const activeDrivers = await Driver.countDocuments({ isOnDuty: true });
+
+    // Broadcast dashboard update (optimized with single aggregation)
+    const driverStats = await Driver.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalDrivers: { $sum: 1 },
+          activeDrivers: {
+            $sum: { $cond: [{ $eq: ["$isOnDuty", true] }, 1, 0] }
+          }
+        }
+      }
+    ]);
+    const stats = driverStats[0] || { totalDrivers: 0, activeDrivers: 0 };
     global.io.to("admin-dashboard").emit("dashboard-update", {
       type: "drivers",
-      data: { totalDrivers, activeDrivers },
-      timestamp: new Date().toISOString()
+      data: stats,
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -47,14 +60,16 @@ export const createDriver = catchAsyncErrors(async (req, res) => {
 
 export const createDrivers = catchAsyncErrors(async (req, res) => {
   const drivers = req.body;
-  console.log(drivers);
   if (!Array.isArray(drivers) || drivers.length === 0) {
     throw Error("Please provide an array of drivers");
   }
 
-  // Add createdBy automatically if needed
-
-  const createdDrivers = await Driver.insertMany(drivers);
+  // Add transportCompanyId automatically if needed
+  const newDrivers = drivers.map((driver) => ({
+    ...driver,
+    transportCompanyId: req.user.role === "transport-admin" ? req.user.transportCompanyId : driver.transportCompanyId,
+  }));
+  const createdDrivers = await Driver.insertMany(newDrivers);
 
   if (!createdDrivers)
     throw Error("Some error occurred creating drivers, Try again!");
@@ -103,7 +118,6 @@ export const updateDriver = catchAsyncErrors(async (req, res, next) => {
         vehicleId,
         driverId: id,
       });
-      console.log(v, r);
     }
   }
   if (!vehicleId && !routeId) {
@@ -126,16 +140,26 @@ export const updateDriver = catchAsyncErrors(async (req, res, next) => {
     global.io.to("drivers-updates").emit("driver-update", {
       type: "updated",
       driver: updatedDriver,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
-    // Broadcast dashboard update
-    const totalDrivers = await Driver.countDocuments();
-    const activeDrivers = await Driver.countDocuments({ isOnDuty: true });
+
+    // Broadcast dashboard update (optimized with single aggregation)
+    const driverStats = await Driver.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalDrivers: { $sum: 1 },
+          activeDrivers: {
+            $sum: { $cond: [{ $eq: ["$isOnDuty", true] }, 1, 0] }
+          }
+        }
+      }
+    ]);
+    const stats = driverStats[0] || { totalDrivers: 0, activeDrivers: 0 };
     global.io.to("admin-dashboard").emit("dashboard-update", {
       type: "drivers",
-      data: { totalDrivers, activeDrivers },
-      timestamp: new Date().toISOString()
+      data: stats,
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -154,22 +178,32 @@ export const deleteDriver = catchAsyncErrors(async (req, res, next) => {
   if (!driver) throw Error("Invalid resource, driver does not exist!", 404);
 
   await Route.findOneAndUpdate({ driverId: id }, { driverId: null });
-  
+
   // Broadcast real-time update
   if (global.io) {
     global.io.to("drivers-updates").emit("driver-update", {
       type: "deleted",
       driverId: id,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
-    // Broadcast dashboard update
-    const totalDrivers = await Driver.countDocuments();
-    const activeDrivers = await Driver.countDocuments({ isOnDuty: true });
+
+    // Broadcast dashboard update (optimized with single aggregation)
+    const driverStats = await Driver.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalDrivers: { $sum: 1 },
+          activeDrivers: {
+            $sum: { $cond: [{ $eq: ["$isOnDuty", true] }, 1, 0] }
+          }
+        }
+      }
+    ]);
+    const stats = driverStats[0] || { totalDrivers: 0, activeDrivers: 0 };
     global.io.to("admin-dashboard").emit("dashboard-update", {
       type: "drivers",
-      data: { totalDrivers, activeDrivers },
-      timestamp: new Date().toISOString()
+      data: stats,
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -183,17 +217,35 @@ export const deleteDriver = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const getDrivers = catchAsyncErrors(async (req, res, next) => {
-  const { page = 1, limit = 10, onDuty = true, search = "" } = req.query;
-  const drivers = await Driver.find({
-    $or: [{ name: { $regex: search, $options: "i" } }, { isOnDuty: onDuty }],
-  })
-    .populate("vehicleId")
-    .populate("routeId")
-    .skip((page - 1) * limit)
-    .limit(limit);
+  const { page = 1, limit = 10, onDuty, search = "" } = req.query;
 
+  const query = {};
+  
+  console.log(req.user)
+  // Only filter by transportCompanyId for transport-admin, super-admin sees all data
+  if (req.user.role === "transport-admin") {
+    query.transportCompanyId = req.user.transportCompanyId.toString()
+  }
+
+  if (search) {
+    query.fullName = { $regex: search, $options: "i" };
+  }
+
+  if (onDuty !== undefined) {
+    query.isOnDuty = onDuty === 'true';
+  }
+
+  console.log(query)
+  const drivers = await Driver.find()
+  console.log(drivers)
+    // .populate("vehicleId", "plateNumber model capacity")
+    // .populate("routeId", "name stops startLocation endLocation")
+    // .skip((page - 1) * limit)
+    // .limit(limit);
+
+    console.log(drivers)
   if (!drivers) throw Error("Invalid resource, drivers does not exist!", 404);
-  const totalCount = await Driver.countDocuments();
+  const totalCount = await Driver.countDocuments(query);
   res.json({
     success: true,
     data: {
@@ -207,15 +259,22 @@ export const getDrivers = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const getAvailableDrivers = catchAsyncErrors(async (req, res, next) => {
-  const drivers = await Driver.find({
+  const query = {
     routeId: null,
-    vehicleId: null
-  });
+    vehicleId: null,
+  };
+  
+  // Only filter by transportCompanyId for transport-admin, super-admin sees all data
+  if (req.user.role === "transport-admin") {
+    query.transportCompanyId = new mongoose.Types.ObjectId(req.user.transportCompanyId);
+  }
+
+  const drivers = await Driver.find(query);
 
   if (!drivers) throw Error("Invalid resource, drivers does not exist!", 404);
-  
+
   const totalCount = drivers.length;
-  
+
   res.json({
     success: true,
     data: {
@@ -227,7 +286,14 @@ export const getAvailableDrivers = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const deleteDrivers = catchAsyncErrors(async (req, res, next) => {
-  const drivers = await Driver.deleteMany();
+  const query = {};
+  
+  // Only filter by transportCompanyId for transport-admin, super-admin sees all data
+  if (req.user.role === "transport-admin") {
+    query.transportCompanyId = new mongoose.Types.ObjectId(req.user.transportCompanyId);
+  }
+
+  const drivers = await Driver.deleteMany(query);
 
   if (!drivers) throw Error("Invalid resource, drivers does not exist!", 404);
 

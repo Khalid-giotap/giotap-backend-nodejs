@@ -1,9 +1,18 @@
 import { catchAsyncErrors } from "../../middlewares/async_errors.middleware.js";
-import ParkingLot from "../../models/parking-lot.js";
+import ParkingLot from "../../models/parking-lot.model.js";
 import { createError } from "../../utils/error.js";
 
 export const createParkingLot = catchAsyncErrors(async (req, res, next) => {
-  const parkingLot = await ParkingLot.create(req.body);
+  const { transportCompanyId } = req.body;
+
+  const parkingLot = await ParkingLot.create({
+    ...req.body,
+    isEmpty: req.body.vehicleId ? true : false,
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user.transportCompanyId
+        : transportCompanyId,
+  });
 
   res.status(201).json({
     success: true,
@@ -13,12 +22,44 @@ export const createParkingLot = catchAsyncErrors(async (req, res, next) => {
     message: "Parking lot created successfully",
   });
 });
+export const createParkingLots = catchAsyncErrors(async (req, res) => {
+  const lots = req.body;
+
+  if (!Array.isArray(lots) || lots.length === 0) {
+    return res.status(400).json({ error: "Please provide an array of lots" });
+  }
+
+  // Add createdBy automatically if needed
+  const lotsToInsert = lots.map((c) => ({
+    ...c,
+    createdBy: req.user._id,
+    isEmpty: c.vehicleId ? true : false,
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user._id
+        : req.user.transportCompanyId,
+  }));
+
+  const createdLots = await ParkingLot.insertMany(lotsToInsert);
+
+  if (!createdLots) throw Error("Some error adding schools, Try again!");
+
+  res.status(201).json({
+    success: true,
+    data: {
+      lots: createdLots,
+    },
+    message: "Lots created successfully",
+  });
+});
 
 export const getParkingLots = catchAsyncErrors(async (req, res, next) => {
-  const parkingLots = await ParkingLot.find().populate(
-    "vehicleId",
-    "_id plateNumber model"
-  );
+  const parkingLots = await ParkingLot.find({
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user._id
+        : req.user.transportCompanyId,
+  }).populate("vehicleId", "_id plateNumber model");
 
   if (!parkingLots) {
     throw createError("No empty parking lots found", 404);
@@ -55,7 +96,15 @@ export const getParkingLot = catchAsyncErrors(async (req, res, next) => {
 
 export const getEmptyParkingLots = catchAsyncErrors(async (req, res, next) => {
   const parkingLots = await ParkingLot.find({
-    $or: [{ vehicleId: null }, { isEmtpy: true }],
+    $or: [{ vehicleId: null }, { isEmpty: true }],
+    $and: [
+      {
+        transportCompanyId:
+          req.user.role === "transport-admin"
+            ? req.user._id
+            : req.user.transportCompanyId,
+      },
+    ],
   });
 
   if (!parkingLots) {
@@ -73,6 +122,9 @@ export const getEmptyParkingLots = catchAsyncErrors(async (req, res, next) => {
 
 export const updateParkingLot = catchAsyncErrors(async (req, res, next) => {
   const { id } = req.params;
+  if (req.body.vehicleId) {
+    req.body.isEmpty = true;
+  }
   const parkingLot = await ParkingLot.findByIdAndUpdate(id, req.body, {
     new: true,
     populate: {
@@ -112,7 +164,12 @@ export const deleteParkingLot = catchAsyncErrors(async (req, res, next) => {
 });
 
 export const deleteParkingLots = catchAsyncErrors(async (req, res, next) => {
-  const parkingLots = await ParkingLot.deleteMany();
+  const parkingLots = await ParkingLot.deleteMany({
+    transportCompanyId:
+      req.user.role === "transport-admin"
+        ? req.user._id
+        : req.user.transportCompanyId,
+  });
 
   if (!parkingLots) {
     throw createError("some error deleting parking lots", 404);
